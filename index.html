@@ -144,12 +144,13 @@
         <!-- Správce vzorů odběratelů -->
         <div class="card">
             <h3>Správce vzorů</h3>
-            <label>Načíst uložený vzor (odběratel + položky)</label>
-            <div class="flex-row">
+            <label>Načíst uložený vzor</label>
+            <div class="flex-row" style="margin-bottom: 15px;">
                 <select id="pattern-select" onchange="loadPattern()" style="margin-bottom:0;">
                     <option value="">Vyberte vzor...</option>
                 </select>
             </div>
+            <button class="btn-success" onclick="savePattern()" style="margin-bottom: 0;">💾 Uložit aktuální stav jako nový vzor</button>
         </div>
 
         <!-- Základní údaje o faktuře -->
@@ -182,7 +183,6 @@
                 <input type="text" id="odb-ico" placeholder="IČO">
                 <input type="text" id="odb-dic" placeholder="DIČ">
             </div>
-            <button class="btn-success" onclick="savePattern()">💾 Uložit vzor (včetně aktuálních položek)</button>
         </div>
 
         <!-- Položky -->
@@ -462,8 +462,7 @@
             // 1. Přenos dat do skrytého divu
             // Odběratel
             document.getElementById('render-odb-firma').innerText = document.getElementById('odb-firma').value;
-            document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/
-/g, '<br>');
+            document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/\n/g, '<br>');
             document.getElementById('render-odb-ico').innerText = document.getElementById('odb-ico').value;
             document.getElementById('render-odb-dic').innerText = document.getElementById('odb-dic').value;
 
@@ -476,8 +475,7 @@
 
             // Dodavatel
             document.getElementById('render-dod-firma').innerText = localStorage.getItem('faktura_firma') || '';
-            document.getElementById('render-dod-adresa').innerHTML = (localStorage.getItem('faktura_adresa') || '').replace(/
-/g, '<br>');
+            document.getElementById('render-dod-adresa').innerHTML = (localStorage.getItem('faktura_adresa') || '').replace(/\n/g, '<br>');
             document.getElementById('render-dod-ico').innerText = localStorage.getItem('faktura_ico') || '';
             document.getElementById('render-dod-tel').innerText = localStorage.getItem('faktura_tel') || '';
             document.getElementById('render-dod-banka').innerText = localStorage.getItem('faktura_banka') || '';
