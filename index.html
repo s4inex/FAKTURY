@@ -65,35 +65,29 @@
             .modal-content { margin: 40px auto; }
         }
 
-        /* --- OPRAVENÉ STYLY PRO PDF --- */
+  /* ZCELA NOVÁ KONFIGURACE PDF KONTEJNERU */
         #pdf-container {
-            display: none; 
+            display: none;
             position: absolute;
+            left: -9999px;
             top: 0;
-            left: -9999px; /* Kontejner bude při renderu vlevo mimo obrazovku, zabrání posunu i blikání */
-            width: 800px;
-            background: #fff;
-            z-index: 9999;
         }
+
         #invoice-render {
-            width: 800px;
-            padding: 0; /* Odstraněno obří odsazení - odsazení dokumentu se nyní řeší přes html2pdf "margin" parametr */
+            /* Fixní šířka pro A4 (při 96dpi je to cca 794px) */
+            width: 794px; 
+            padding: 40px;
             background: white;
             color: black;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             box-sizing: border-box;
-            line-height: 1.4;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
         }
         .pdf-header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-        .pdf-col { width: 48%; }
-        .pdf-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; margin-top: 0;}
-        .pdf-section-title { font-size: 16px; font-weight: bold; color: #555; margin-bottom: 8px;}
-        .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px;}
-        .pdf-table th { border-bottom: 2px solid #333; padding: 8px; text-align: left; }
-        .pdf-table td { border-bottom: 1px solid #ddd; padding: 8px; }
-        .pdf-totals { width: 300px; margin-left: auto; font-size: 14px; }
-        .pdf-totals td { padding: 6px; }
-        .pdf-signature { margin-top: 40px; }
+        .pdf-col { width: 45%; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .pdf-table th { border-bottom: 2px solid #000; text-align: left; padding: 10px; }
+        .pdf-table td { border-bottom: 1px solid #ccc; padding: 10px; }
     </style>
 </head>
 <body>
