@@ -65,20 +65,19 @@
             .modal-content { margin: 40px auto; }
         }
 
-        /* --- ZCELA PŘEPRACOVANÉ STYLY PRO PDF (Vyřešený posun a oříznutí) --- */
+        /* --- OPRAVENÉ STYLY PRO PDF --- */
         #pdf-container {
             display: none; 
             position: absolute;
             top: 0;
-            left: 0;
-            width: 800px; /* Pevná šířka pro dokonalé proporce na všech zařízeních */
+            left: -9999px; /* Kontejner bude při renderu vlevo mimo obrazovku, zabrání posunu i blikání */
+            width: 800px;
             background: #fff;
             z-index: 9999;
         }
         #invoice-render {
             width: 800px;
-            /* Odsazení: nahoře 20px, vpravo 40px, dole 20px, VLEVO 80px (Tímto se obsah natvrdo posune doprava) */
-            padding: 20px 40px 20px 80px; 
+            padding: 0; /* Odstraněno obří odsazení - odsazení dokumentu se nyní řeší přes html2pdf "margin" parametr */
             background: white;
             color: black;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -399,7 +398,7 @@
         }
 
         function generatePDF() {
-            // PŘENOS DAT DO ŠABLONY - Čteme Z DOM inputů, ne z mezipaměti!
+            // PŘENOS DAT DO ŠABLONY
             
             // 1. Zákazník
             document.getElementById('render-odb-firma').innerText = document.getElementById('odb-firma').value || '';
@@ -414,7 +413,7 @@
             document.getElementById('render-inv-due').innerText = formatDate(document.getElementById('inv-due').value);
             document.getElementById('render-inv-payment').innerText = document.getElementById('inv-payment').value || '';
 
-            // 3. Dodavatel - OPRAVA ZDE: Čteme data z políček v nastavení, i když nebyla uložena
+            // 3. Dodavatel
             document.getElementById('render-dod-firma').innerText = document.getElementById('set-firma').value || '';
             document.getElementById('render-dod-adresa').innerHTML = (document.getElementById('set-adresa').value || '').replace(/\n/g, '<br>');
             document.getElementById('render-dod-ico').innerText = document.getElementById('set-ico').value || '';
@@ -465,7 +464,6 @@
                 document.getElementById('render-podpis').style.display = 'none';
             }
 
-            // --- VLASTNÍ RENDER DO PDF ---
             const container = document.getElementById('pdf-container');
             const element = document.getElementById('invoice-render');
             const btn = document.getElementById('btn-generate');
@@ -473,12 +471,13 @@
             container.style.display = 'block';
             btn.innerText = '⏳ Příprava dat...';
 
-            // Zvýšil jsem prodlevu na 200ms pro jistotu, že prohlížeč vykreslí všechny texty
             setTimeout(() => {
                 btn.innerText = '⏳ Generuji PDF...';
 
+                // OPRAVENÉ NASTAVENÍ html2pdf
                 const opt = {
-                    margin:       [10, 0, 10, 0], // Levé odsazení necháváme na nule, je vyřešeno přes padding (80px)
+                    // Margin řeší vnější okraje mnohem spolehlivěji než CSS padding: [Nahoře, Vpravo, Dole, Vlevo] v milimetrech
+                    margin:       [20, 15, 20, 15], 
                     filename:     `Faktura_${invNum.replace(/\//g, '-')}.pdf`,
                     image:        { type: 'jpeg', quality: 1.0 },
                     html2canvas:  { 
@@ -486,7 +485,8 @@
                         useCORS: true, 
                         scrollY: 0,
                         scrollX: 0,
-                        windowWidth: 800 // Nutné, aby mobilní zařízení dokument nezdeformovalo
+                        windowWidth: 800,
+                        width: 800 // KLÍČOVÉ: Tento parametr garantuje vyfocení celé šířky, nenechá prohlížeč ustřihnout dokument podle displeje mobilu!
                     },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
