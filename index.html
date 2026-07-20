@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_content = """<!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
@@ -144,7 +144,7 @@
         <!-- Správce vzorů odběratelů -->
         <div class="card">
             <h3>Správce vzorů</h3>
-            <label>Načíst uloženého odběratele</label>
+            <label>Načíst uložený vzor (odběratel + položky)</label>
             <div class="flex-row">
                 <select id="pattern-select" onchange="loadPattern()" style="margin-bottom:0;">
                     <option value="">Vyberte vzor...</option>
@@ -182,7 +182,7 @@
                 <input type="text" id="odb-ico" placeholder="IČO">
                 <input type="text" id="odb-dic" placeholder="DIČ">
             </div>
-            <button class="btn-success" onclick="savePattern()">💾 Uložit jako nový vzor</button>
+            <button class="btn-success" onclick="savePattern()">💾 Uložit vzor (včetně aktuálních položek)</button>
         </div>
 
         <!-- Položky -->
@@ -359,7 +359,7 @@
             alert('Nastavení uloženo.');
         }
 
-        // --- VZORY ODBĚRATELŮ ---
+        // --- VZORY ODBĚRATELŮ A POLOŽEK ---
         function loadPatternsList() {
             patterns = JSON.parse(localStorage.getItem('faktura_vzory')) || {};
             const select = document.getElementById('pattern-select');
@@ -376,25 +376,42 @@
             let name = prompt("Zadejte název vzoru:", firma);
             if(!name) return;
             
+            // Zkopírujeme aktuální stav položek, aby se do vzoru uložily nezávisle
+            const itemsCopy = JSON.parse(JSON.stringify(items));
+
             patterns[name] = {
                 firma: firma,
                 adresa: document.getElementById('odb-adresa').value,
                 ico: document.getElementById('odb-ico').value,
-                dic: document.getElementById('odb-dic').value
+                dic: document.getElementById('odb-dic').value,
+                items: itemsCopy // Uložíme i položky
             };
+            
             localStorage.setItem('faktura_vzory', JSON.stringify(patterns));
             loadPatternsList();
             document.getElementById('pattern-select').value = name;
-            alert('Vzor byl uložen.');
+            alert('Vzor byl úspěšně uložen včetně odběratele a všech aktuálních položek.');
         }
 
         function loadPattern() {
             const name = document.getElementById('pattern-select').value;
             if(name && patterns[name]) {
-                document.getElementById('odb-firma').value = patterns[name].firma;
-                document.getElementById('odb-adresa').value = patterns[name].adresa;
-                document.getElementById('odb-ico').value = patterns[name].ico;
-                document.getElementById('odb-dic').value = patterns[name].dic;
+                // Načteme odběratele
+                document.getElementById('odb-firma').value = patterns[name].firma || '';
+                document.getElementById('odb-adresa').value = patterns[name].adresa || '';
+                document.getElementById('odb-ico').value = patterns[name].ico || '';
+                document.getElementById('odb-dic').value = patterns[name].dic || '';
+                
+                // Načteme položky
+                if (patterns[name].items && Array.isArray(patterns[name].items)) {
+                    items = JSON.parse(JSON.stringify(patterns[name].items));
+                } else {
+                    // Záloha pro staré vzory bez položek
+                    items = [{ name: '', qty: 1, price: 0, vat: 0 }];
+                }
+                
+                // Vykreslíme načtené položky do UI
+                renderItemsUI();
             }
         }
 
@@ -531,4 +548,9 @@
         }
     </script>
 </body>
-</html>
+</html>"""
+
+with open("mobilni_fakturace_v2.html", "w", encoding="utf-8") as file:
+    file.write(html_content)
+
+print("[file-tag: mobilni_fakturace_v2.html]")
