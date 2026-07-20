@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generátor Faktur</title>
-    <!-- Použití html2pdf z CDN pro snadné generování PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -21,62 +20,32 @@
             color: var(--text); 
         }
         .header-top {
-            background: var(--primary);
-            color: white;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--primary); color: white; padding: 15px; display: flex; 
+            justify-content: space-between; align-items: center; position: sticky; 
+            top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .header-top h2 { margin: 0; font-size: 1.2rem; }
         .header-top button {
-            background: white;
-            color: var(--primary);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
+            background: white; color: var(--primary); border: none; padding: 8px 12px; 
+            border-radius: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer;
         }
         .app-container { padding: 15px; max-width: 600px; margin: 0 auto; padding-bottom: 80px;}
         .card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            margin-bottom: 15px; 
+            background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
         }
         h3 { margin-top: 0; color: #444; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.1rem; }
         label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px; font-weight: 500;}
         input, select, textarea { 
-            width: 100%; 
-            box-sizing: border-box; 
-            padding: 12px; 
-            margin-bottom: 15px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-size: 16px; /* 16px zamezí auto-zoomu na iOS */
-            background: #fafafa;
+            width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 15px; 
+            border: 1px solid var(--border); border-radius: 8px; font-size: 16px; background: #fafafa;
         }
         .flex-row { display: flex; gap: 10px; }
         .flex-row > * { flex: 1; }
         
         .btn { 
-            display: block; 
-            width: 100%; 
-            padding: 15px; 
-            text-align: center; 
-            border-radius: 8px; 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            box-sizing: border-box;
+            display: block; width: 100%; padding: 15px; text-align: center; border-radius: 8px; 
+            font-size: 1.1rem; font-weight: bold; border: none; cursor: pointer; box-sizing: border-box;
         }
         .btn-primary { background: var(--primary); color: white; margin-top: 20px;}
         .btn-secondary { background: var(--secondary); color: var(--primary); margin-bottom: 10px; padding: 12px;}
@@ -84,35 +53,31 @@
         
         /* Modál Nastavení */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 100;
-            overflow-y: auto;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 100; overflow-y: auto;
         }
         .modal.active { display: block; }
         .modal-content {
-            background: white;
-            margin: 20px;
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 600px;
+            background: white; margin: 20px; padding: 20px; border-radius: 12px; max-width: 600px;
         }
         @media (min-width: 640px) {
             .modal-content { margin: 40px auto; }
         }
 
-        /* Skrytý div pro renderování PDF (Držíme pevnou A4 šířku) */
+        /* OPRAVA: Kontejner nesmí být na -9999px. Použijeme klasické skrytí přes display */
         #pdf-container {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            z-index: -1;
+            display: none; /* Je skrytý, ukážeme ho jen v JS před renderem */
+            width: 100%;
+            background: #fff;
+            position: absolute; /* Překryje aplikaci při renderu na zlomok vteřiny */
+            top: 0; left: 0;
+            z-index: 9999;
         }
         #invoice-render {
-            width: 794px; /* Fixní šířka pro A4 (cca 210mm při 96 PPI) */
-            padding: 40px;
+            /* Šířka přesně odpovídá 210mm (A4) mínus 2x10mm jsPDF okraje */
+            width: 190mm; 
+            margin: 0 auto;
+            padding: 10mm;
             background: white;
             color: black;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -133,15 +98,13 @@
 </head>
 <body>
 
-    <!-- Horní lišta -->
     <header class="header-top">
         <h2>Faktury</h2>
         <button onclick="toggleModal('settings-modal', true)">⚙️ Nastavení</button>
     </header>
 
     <div class="app-container">
-        
-        <!-- Správce vzorů odběratelů -->
+        <!-- Vzory -->
         <div class="card">
             <h3>Správce vzorů</h3>
             <label>Načíst uložený vzor</label>
@@ -153,7 +116,7 @@
             <button class="btn-success" onclick="savePattern()" style="margin-bottom: 0;">💾 Uložit aktuální stav jako nový vzor</button>
         </div>
 
-        <!-- Základní údaje o faktuře -->
+        <!-- Údaje -->
         <div class="card">
             <h3>Údaje o faktuře</h3>
             <label>Číslo faktury</label>
@@ -192,12 +155,10 @@
             <button class="btn-secondary" onclick="addItem()">+ Přidat další položku</button>
         </div>
 
-        <!-- Tlačítko generovat -->
         <button class="btn btn-primary" id="btn-generate" onclick="generatePDF()">📄 Generovat PDF</button>
-
     </div>
 
-    <!-- Modál Nastavení (Údaje dodavatele) -->
+    <!-- Modál -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <h3>Moje údaje (Dodavatel)</h3>
@@ -222,7 +183,7 @@
     </div>
 
 
-    <!-- SKRYTÁ ŠABLONA PRO PDF -->
+    <!-- ŠABLONA PRO PDF -->
     <div id="pdf-container">
         <div id="invoice-render">
             <div class="pdf-header">
@@ -234,7 +195,7 @@
                     <div>DIČ: <span id="render-odb-dic"></span></div>
                 </div>
                 <div class="pdf-col" style="text-align: right;">
-                    <div class="pdf-title">Faktura - daňový doklad. <span id="render-inv-number"></span></div>
+                    <div class="pdf-title">Faktura - daňový doklad č. <span id="render-inv-number"></span></div>
                     <div>Datum vytvoření: <span id="render-inv-date"></span></div>
                     <div>Způsob platby: <span id="render-inv-payment"></span></div>
                     <div>Datum splatnosti: <span id="render-inv-due"></span></div>
@@ -281,28 +242,21 @@
             </table>
 
             <div class="pdf-signature">
-                <div>Razítko a podpis:</div>
+                <div id="render-podpis-text" style="display:none;">Razítko a podpis:</div>
                 <img id="render-podpis" src="" style="max-height: 120px; max-width: 300px; display: none; margin-top: 10px;">
             </div>
         </div>
     </div>
 
 
-    <!-- JAVASCRIPT LOGIKA -->
     <script>
-        // Stav položek
-        let items = [
-            { name: '', qty: 1, price: 0, vat: 0 }
-        ];
-
-        // Vzory
+        let items = [{ name: '', qty: 1, price: 0, vat: 0 }];
         let patterns = {};
 
         window.onload = () => {
             loadSettings();
             loadPatternsList();
             
-            // Výchozí datum = dnes, splatnost = za 7 dní
             const today = new Date();
             document.getElementById('inv-date').valueAsDate = today;
             const nextWeek = new Date();
@@ -311,7 +265,6 @@
             
             renderItemsUI();
             
-            // Listener pro nahrávání podpisu (uložení do Base64)
             document.getElementById('set-podpis').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if(file) {
@@ -359,7 +312,6 @@
             alert('Nastavení uloženo.');
         }
 
-        // --- VZORY ODBĚRATELŮ A POLOŽEK ---
         function loadPatternsList() {
             patterns = JSON.parse(localStorage.getItem('faktura_vzory')) || {};
             const select = document.getElementById('pattern-select');
@@ -372,50 +324,39 @@
         function savePattern() {
             const firma = document.getElementById('odb-firma').value;
             if(!firma) { alert('Zadejte alespoň název firmy odběratele.'); return; }
-            
             let name = prompt("Zadejte název vzoru:", firma);
             if(!name) return;
             
-            // Zkopírujeme aktuální stav položek, aby se do vzoru uložily nezávisle
             const itemsCopy = JSON.parse(JSON.stringify(items));
-
             patterns[name] = {
-                firma: firma,
-                adresa: document.getElementById('odb-adresa').value,
-                ico: document.getElementById('odb-ico').value,
-                dic: document.getElementById('odb-dic').value,
-                items: itemsCopy // Uložíme i položky
+                firma: firma, adresa: document.getElementById('odb-adresa').value,
+                ico: document.getElementById('odb-ico').value, dic: document.getElementById('odb-dic').value,
+                items: itemsCopy
             };
             
             localStorage.setItem('faktura_vzory', JSON.stringify(patterns));
             loadPatternsList();
             document.getElementById('pattern-select').value = name;
-            alert('Vzor byl úspěšně uložen včetně odběratele a všech aktuálních položek.');
+            alert('Vzor byl úspěšně uložen.');
         }
 
         function loadPattern() {
             const name = document.getElementById('pattern-select').value;
             if(name && patterns[name]) {
-                // Načteme odběratele
                 document.getElementById('odb-firma').value = patterns[name].firma || '';
                 document.getElementById('odb-adresa').value = patterns[name].adresa || '';
                 document.getElementById('odb-ico').value = patterns[name].ico || '';
                 document.getElementById('odb-dic').value = patterns[name].dic || '';
                 
-                // Načteme položky
                 if (patterns[name].items && Array.isArray(patterns[name].items)) {
                     items = JSON.parse(JSON.stringify(patterns[name].items));
                 } else {
-                    // Záloha pro staré vzory bez položek
                     items = [{ name: '', qty: 1, price: 0, vat: 0 }];
                 }
-                
-                // Vykreslíme načtené položky do UI
                 renderItemsUI();
             }
         }
 
-        // --- POLOŽKY ---
         function renderItemsUI() {
             const list = document.getElementById('items-list');
             list.innerHTML = '';
@@ -432,8 +373,7 @@
                         <div><label>Cena/MJ</label><input type="number" step="0.01" value="${item.price}" onchange="updateItem(${index}, 'price', this.value)"></div>
                         <div><label>DPH %</label><input type="number" value="${item.vat}" onchange="updateItem(${index}, 'vat', this.value)"></div>
                     </div>
-                </div>
-                `;
+                </div>`;
             });
         }
 
@@ -451,7 +391,6 @@
             items[index][field] = value;
         }
 
-        // --- GENERATOR PDF ---
         function formatDate(dateStr) {
             if(!dateStr) return '';
             const d = new Date(dateStr);
@@ -459,21 +398,17 @@
         }
 
         function generatePDF() {
-            // 1. Přenos dat do skrytého divu
-            // Odběratel
             document.getElementById('render-odb-firma').innerText = document.getElementById('odb-firma').value;
             document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/\n/g, '<br>');
             document.getElementById('render-odb-ico').innerText = document.getElementById('odb-ico').value;
             document.getElementById('render-odb-dic').innerText = document.getElementById('odb-dic').value;
 
-            // Info faktura
             const invNum = document.getElementById('inv-number').value || '0000';
             document.getElementById('render-inv-number').innerText = invNum;
             document.getElementById('render-inv-date').innerText = formatDate(document.getElementById('inv-date').value);
             document.getElementById('render-inv-due').innerText = formatDate(document.getElementById('inv-due').value);
             document.getElementById('render-inv-payment').innerText = document.getElementById('inv-payment').value;
 
-            // Dodavatel
             document.getElementById('render-dod-firma').innerText = localStorage.getItem('faktura_firma') || '';
             document.getElementById('render-dod-adresa').innerHTML = (localStorage.getItem('faktura_adresa') || '').replace(/\n/g, '<br>');
             document.getElementById('render-dod-ico').innerText = localStorage.getItem('faktura_ico') || '';
@@ -481,26 +416,22 @@
             document.getElementById('render-dod-banka').innerText = localStorage.getItem('faktura_banka') || '';
             document.getElementById('render-dod-ucet').innerText = localStorage.getItem('faktura_ucet') || '';
 
-            // Položky
             const tbody = document.getElementById('render-items-body');
             tbody.innerHTML = '';
-            let total = 0;
-            let totalVat = 0;
+            let total = 0, totalVat = 0;
 
             if (items.length === 0 || (items.length === 1 && !items[0].name)) {
-                // Přidání textu "Fakturuji Vám dle rozpisu" pokud je prázdno (jako vzor)
                 tbody.innerHTML += `<tr><td colspan="5" style="padding: 8px;">Fakturuji Vám dle rozpisu</td></tr>`;
             }
 
             items.forEach(item => {
-                if(!item.name && item.price == 0) return; // přeskoč prázdné
+                if(!item.name && item.price == 0) return;
                 let p = parseFloat(item.price) || 0;
                 let q = parseFloat(item.qty) || 1;
                 let v = parseFloat(item.vat) || 0;
                 let sum = p * q;
                 let sumVat = sum * (v/100);
-                total += sum;
-                totalVat += sumVat;
+                total += sum; totalVat += sumVat;
 
                 tbody.innerHTML += `
                     <tr>
@@ -509,39 +440,53 @@
                         <td style="text-align: right;">${p.toFixed(2).replace('.',',')}</td>
                         <td style="text-align: right;">${sum.toFixed(2).replace('.',',')}</td>
                         <td style="text-align: right;">${v}%</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
 
             document.getElementById('render-total-price').innerText = total.toFixed(2).replace('.',',') + ' Kč';
             document.getElementById('render-total-vat').innerText = totalVat.toFixed(2).replace('.',',') + ' Kč';
             document.getElementById('render-total-final').innerText = (total + totalVat).toFixed(2).replace('.',',') + ' Kč';
 
-            // Podpis
             const podpisSrc = localStorage.getItem('faktura_podpis');
             if(podpisSrc) {
+                document.getElementById('render-podpis-text').style.display = 'block';
                 document.getElementById('render-podpis').src = podpisSrc;
                 document.getElementById('render-podpis').style.display = 'block';
             } else {
+                document.getElementById('render-podpis-text').style.display = 'none';
                 document.getElementById('render-podpis').style.display = 'none';
             }
 
-            // 2. Tisk do PDF
+            // OPRAVA LOGIKY PRO RENDER:
+            const container = document.getElementById('pdf-container');
             const element = document.getElementById('invoice-render');
             const btn = document.getElementById('btn-generate');
+            
+            // 1. Zviditelnit kontejner
+            container.style.display = 'block';
+            
+            // 2. Uchovat scroll a přesunout se nahoru, aby html2canvas neutnul obrázek uprostřed
+            const originalScroll = window.scrollY;
+            window.scrollTo(0, 0);
+
             btn.innerText = '⏳ Generuji PDF...';
 
             const opt = {
                 margin:       10,
                 filename:     `Faktura_${invNum.replace(/\//g, '-')}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 3, useCORS: true, windowWidth: element.scrollWidth }, // Větší scale = ostřejší text
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
+                // 3. Po uložení ihned vše schovat a vrátit scroll
+                container.style.display = 'none';
+                window.scrollTo(0, originalScroll);
                 btn.innerText = '📄 Generovat PDF';
             }).catch(err => {
+                container.style.display = 'none';
+                window.scrollTo(0, originalScroll);
                 alert('Chyba při generování PDF: ' + err);
                 btn.innerText = '📄 Generovat PDF';
             });
