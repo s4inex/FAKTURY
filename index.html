@@ -1,4 +1,4 @@
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
@@ -462,7 +462,8 @@ html_content = """<!DOCTYPE html>
             // 1. Přenos dat do skrytého divu
             // Odběratel
             document.getElementById('render-odb-firma').innerText = document.getElementById('odb-firma').value;
-            document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/\n/g, '<br>');
+            document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/
+/g, '<br>');
             document.getElementById('render-odb-ico').innerText = document.getElementById('odb-ico').value;
             document.getElementById('render-odb-dic').innerText = document.getElementById('odb-dic').value;
 
@@ -475,7 +476,8 @@ html_content = """<!DOCTYPE html>
 
             // Dodavatel
             document.getElementById('render-dod-firma').innerText = localStorage.getItem('faktura_firma') || '';
-            document.getElementById('render-dod-adresa').innerHTML = (localStorage.getItem('faktura_adresa') || '').replace(/\n/g, '<br>');
+            document.getElementById('render-dod-adresa').innerHTML = (localStorage.getItem('faktura_adresa') || '').replace(/
+/g, '<br>');
             document.getElementById('render-dod-ico').innerText = localStorage.getItem('faktura_ico') || '';
             document.getElementById('render-dod-tel').innerText = localStorage.getItem('faktura_tel') || '';
             document.getElementById('render-dod-banka').innerText = localStorage.getItem('faktura_banka') || '';
@@ -548,9 +550,4 @@ html_content = """<!DOCTYPE html>
         }
     </script>
 </body>
-</html>"""
-
-with open("mobilni_fakturace_v2.html", "w", encoding="utf-8") as file:
-    file.write(html_content)
-
-print("[file-tag: mobilni_fakturace_v2.html]")
+</html>
