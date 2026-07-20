@@ -64,20 +64,19 @@
             .modal-content { margin: 40px auto; }
         }
 
-        /* OPRAVA: Kontejner nesmí být na -9999px. Použijeme klasické skrytí přes display */
+        /* --- OPRAVENÉ STYLY PRO PDF --- */
         #pdf-container {
-            display: none; /* Je skrytý, ukážeme ho jen v JS před renderem */
-            width: 100%;
-            background: #fff;
-            position: absolute; /* Překryje aplikaci při renderu na zlomok vteřiny */
-            top: 0; left: 0;
+            display: none; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px; /* Fixní desktopová šířka pro správné oříznutí */
             z-index: 9999;
+            background: #fff;
         }
         #invoice-render {
-            /* Šířka přesně odpovídá 210mm (A4) mínus 2x10mm jsPDF okraje */
-            width: 190mm; 
-            margin: 0 auto;
-            padding: 10mm;
+            width: 800px;
+            padding: 40px;
             background: white;
             color: black;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -398,6 +397,7 @@
         }
 
         function generatePDF() {
+            // Přenos dat
             document.getElementById('render-odb-firma').innerText = document.getElementById('odb-firma').value;
             document.getElementById('render-odb-adresa').innerHTML = document.getElementById('odb-adresa').value.replace(/\n/g, '<br>');
             document.getElementById('render-odb-ico').innerText = document.getElementById('odb-ico').value;
@@ -457,39 +457,44 @@
                 document.getElementById('render-podpis').style.display = 'none';
             }
 
-            // OPRAVA LOGIKY PRO RENDER:
+            // --- OPRAVA LOGIKY PRO RENDER ---
             const container = document.getElementById('pdf-container');
             const element = document.getElementById('invoice-render');
             const btn = document.getElementById('btn-generate');
             
-            // 1. Zviditelnit kontejner
+            // 1. Zviditelnit kontejner, aby prohlížeč mohl vypočítat velikosti
             container.style.display = 'block';
-            
-            // 2. Uchovat scroll a přesunout se nahoru, aby html2canvas neutnul obrázek uprostřed
-            const originalScroll = window.scrollY;
-            window.scrollTo(0, 0);
+            btn.innerText = '⏳ Příprava dat...';
 
-            btn.innerText = '⏳ Generuji PDF...';
+            // 2. Počkat chviličku (150ms), než prohlížeč vykreslí text a layout. 
+            // Jinak by html2canvas mohl vyfotit prázdný box!
+            setTimeout(() => {
+                btn.innerText = '⏳ Generuji PDF...';
 
-            const opt = {
-                margin:       10,
-                filename:     `Faktura_${invNum.replace(/\//g, '-')}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 3, useCORS: true, windowWidth: element.scrollWidth }, // Větší scale = ostřejší text
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+                const opt = {
+                    margin:       10,
+                    filename:     `Faktura_${invNum.replace(/\//g, '-')}.pdf`,
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        scrollY: 0,        // Zabrání posunutí dokumentu, pokud jste scrollovali dolů
+                        scrollX: 0,        // Zabrání posunutí dokumentu
+                        windowWidth: 800   // Simuluje šířku 800px (zabrání oříznutí na mobilu)
+                    },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                // 3. Po uložení ihned vše schovat a vrátit scroll
-                container.style.display = 'none';
-                window.scrollTo(0, originalScroll);
-                btn.innerText = '📄 Generovat PDF';
-            }).catch(err => {
-                container.style.display = 'none';
-                window.scrollTo(0, originalScroll);
-                alert('Chyba při generování PDF: ' + err);
-                btn.innerText = '📄 Generovat PDF';
-            });
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Po dokončení kontejner zase skryjeme
+                    container.style.display = 'none';
+                    btn.innerText = '📄 Generovat PDF';
+                }).catch(err => {
+                    container.style.display = 'none';
+                    alert('Chyba při generování PDF: ' + err);
+                    btn.innerText = '📄 Generovat PDF';
+                });
+            }, 150);
         }
     </script>
 </body>
