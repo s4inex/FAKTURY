@@ -96,6 +96,21 @@
             max-width: 100%;
             min-width: 0;
             box-sizing: border-box;
+            font-family: inherit;
+            margin: 0;
+        }
+
+        /* OPRAVA DATUMOVÝCH POLÍ (hlavně pro iOS Safari) */
+        input[type="date"] {
+            -webkit-appearance: none; /* Vypne nativní iOS design */
+            -moz-appearance: none;
+            appearance: none;
+            display: block;
+            width: 100%;
+            text-align: left; /* Zarovná text se zbytkem polí */
+            background-color: white;
+            min-height: 38px; /* Aby pole nebylo příliš nízké */
+            color: var(--text);
         }
 
         input[type="file"] {
@@ -303,7 +318,7 @@
     <div class="container">
     <div class="panel form-panel">
         
-        <!-- OPRAVENÝ SPRÁVCE VZORŮ (využívá nové třídy) -->
+        <!-- OPRAVENÝ SPRÁVCE VZORŮ -->
         <div class="template-box">
             <label style="color: #4338ca; font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 10px;">📂 Načíst uložený vzor faktury</label>
             <div class="template-controls">
@@ -421,13 +436,11 @@
         </div>
     </div></div><script>
     
-    // --- INICIALIZACE DATA A ČÍSLA FAKTURY ---
     document.getElementById('f_date_issue').valueAsDate = new Date();
     let dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
-    // Generování defaultního čísla faktury MM/YYYY
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const yyyy = now.getFullYear();
@@ -436,14 +449,12 @@
 
     let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 21 }];
 
-    // --- LOGIKA PRO OVLÁDÁNÍ MODALU ---
     function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
     function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
     window.onclick = function(event) {
         if (event.target == document.getElementById('settingsModal')) closeSettings();
     }
 
-    // --- LOGIKA PRO NAHRÁVÁNÍ A ULOŽENÍ RAZÍTKA ---
     function handleStampUpload(event) {
         const file = event.target.files[0];
         if (file) {
@@ -474,7 +485,6 @@
         }
     }
 
-    // --- FUNKCE PRO PRÁCI S ULOŽENÝMI DATY (LOCALSTORAGE) ---
     const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_sup_phone'];
 
     function loadSupplierData() {
@@ -497,7 +507,6 @@
         });
     }
 
-    // --- SPRÁVA VZORŮ FAKTUR ---
     let invoiceTemplates = JSON.parse(localStorage.getItem('invoice_templates')) || {};
 
     function renderTemplateList() {
@@ -570,7 +579,6 @@
             renderTemplateList();
         }
     }
-    // ---------------------------------------------------------
 
     function renderItemsForm() {
         const container = document.getElementById('items-container');
