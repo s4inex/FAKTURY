@@ -102,14 +102,14 @@
 
         /* OPRAVA DATUMOVÝCH POLÍ (hlavně pro iOS Safari) */
         input[type="date"] {
-            -webkit-appearance: none; /* Vypne nativní iOS design */
+            -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
             display: block;
             width: 100%;
-            text-align: left; /* Zarovná text se zbytkem polí */
+            text-align: left;
             background-color: white;
-            min-height: 38px; /* Aby pole nebylo příliš nízké */
+            min-height: 38px;
             color: var(--text);
         }
 
@@ -164,10 +164,10 @@
         }
         @media (max-width: 600px) {
             .template-controls {
-                flex-direction: column; /* Na mobilech pod sebe */
+                flex-direction: column;
             }
             .template-controls .btn {
-                width: 100%; /* Na mobilech roztáhnout na celou šířku */
+                width: 100%;
             }
         }
 
@@ -447,7 +447,8 @@
     document.getElementById('f_number').value = `${mm}/${yyyy}`;
     document.getElementById('f_vs').value = `${yyyy}${mm}001`;
 
-    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 21 }];
+    /* ZMĚNA: Výchozí DPH u počáteční položky z 21 na 0 */
+    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
 
     function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
     function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
@@ -611,7 +612,8 @@
     }
 
     function addItem() {
-        items.push({ name: '', qty: 1, price: 0, dph: 21 }); 
+        /* ZMĚNA: Výchozí DPH u nové položky z 21 na 0 */
+        items.push({ name: '', qty: 1, price: 0, dph: 0 }); 
         renderItemsForm();
     }
 
