@@ -159,7 +159,7 @@
         
         .mb-4 { margin-bottom: 1rem; }
 
-        /* TISKOVÉ STYLY (Pro nativní generování PDF v prohlížeči) */
+        /* TISKOVÉ STYLY */
         @media print {
             @page {
                 size: A4;
@@ -186,7 +186,7 @@
 
         <div class="grid-2">
             <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 10px;">
-                <legend style="font-weight: bold; font-size: 0.9rem;">Dodavatel</legend>
+                <legend style="font-weight: bold; font-size: 0.9rem;">Dodavatel (Ukládá se automaticky)</legend>
                 <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_sup_name" value="Moje Firma s.r.o." oninput="updatePreview()"></div>
                 <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_sup_street" value="Podnikatelská 123" oninput="updatePreview()"></div>
                 <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_sup_city" value="Praha 1, 110 00" oninput="updatePreview()"></div>
@@ -223,8 +223,7 @@
 
         <div style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
             <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF (Přímé stažení)</button>
-            <button class="btn btn-outline" style="font-size: 1.1rem; padding: 15px;" onclick="window.print()">🖨️ Nativní tisk / Uložit jako PDF (Doporučeno)</button>
-            <p style="font-size: 0.8rem; color: #6b7280; text-align: center;">Pokud první tlačítko zlobí, druhé (Nativní tisk) funguje bezchybně - stačí v dialogu vybrat "Uložit jako PDF". Text pak lze krásně kopírovat.</p>
+            <button class="btn btn-outline" style="font-size: 1.1rem; padding: 15px;" onclick="window.print()">🖨️ Nativní tisk / Uložit jako PDF</button>
         </div>
     </div>
 
@@ -300,6 +299,25 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
     let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000 }];
+
+    // --- FUNKCE PRO PRÁCI S ULOŽENÝMI DATY (LOCALSTORAGE) ---
+    const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank'];
+
+    function loadSupplierData() {
+        supplierFields.forEach(id => {
+            const savedValue = localStorage.getItem(id);
+            if (savedValue !== null) {
+                document.getElementById(id).value = savedValue;
+            }
+        });
+    }
+
+    function saveSupplierData() {
+        supplierFields.forEach(id => {
+            localStorage.setItem(id, document.getElementById(id).value);
+        });
+    }
+    // ---------------------------------------------------------
 
     function renderItemsForm() {
         const container = document.getElementById('items-container');
@@ -385,6 +403,9 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         });
 
         document.getElementById('p_total_price').textContent = formatCurrency(total);
+
+        // Automatické uložení dat dodavatele při každé změně obsahu
+        saveSupplierData();
     }
 
     function generatePDF() {
@@ -396,13 +417,11 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         const element = document.getElementById('invoice-pdf');
         const wrapper = document.querySelector('.preview-wrapper');
         
-        // OPRAVA PRO MOBILY A PC: Zrušení scrollování obalu a přesun nahoru
-        // html2canvas nesmí fotit "odskrolovaný" nebo oříznutý prvek
         const originalOverflow = wrapper.style.overflowX;
         wrapper.style.overflowX = 'visible';
         
         const currentScrollY = window.scrollY;
-        window.scrollTo(0, 0); // Odskrolování nahoru zabrání bílému pruhu
+        window.scrollTo(0, 0); 
 
         const invNum = document.getElementById('f_number').value || 'nova';
         
@@ -420,7 +439,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
-            // Návrat zobrazení do normálu
             wrapper.style.overflowX = originalOverflow;
             window.scrollTo(0, currentScrollY);
             
@@ -435,6 +453,8 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         });
     }
 
+    // Při prvním načtení stránky načteme data a teprve pak vykreslíme formulář a náhled
+    loadSupplierData();
     renderItemsForm();
 </script>
 </body>
