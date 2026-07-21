@@ -92,6 +92,11 @@
             box-sizing: border-box;
         }
 
+        input[type="file"] {
+            padding: 5px;
+            font-size: 0.85rem;
+        }
+
         input:focus { border-color: var(--primary); }
 
         .btn {
@@ -186,6 +191,8 @@
             color: #000;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .inv-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 30px; }
@@ -206,7 +213,13 @@
         .inv-items th, .inv-items td { padding: 10px; border-bottom: 1px solid #ddd; }
         .text-right { text-align: right !important; }
 
-        .inv-total { text-align: right; margin-top: 30px; }
+        .inv-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 30px; }
+        
+        .stamp-box { text-align: center; width: 220px; }
+        .stamp-img { max-width: 100%; max-height: 120px; object-fit: contain; display: none; margin: 0 auto 5px auto; }
+        .stamp-line { border-top: 1px solid #000; padding-top: 5px; font-size: 14px; font-weight: bold; }
+
+        .inv-total { text-align: right; }
         .inv-total-text { font-size: 24px; font-weight: bold; }
         
         /* TISKOVÉ STYLY */
@@ -216,7 +229,7 @@
             .form-panel, .modal { display: none !important; }
             .preview-panel { padding: 0; margin: 0; box-shadow: none; width: 100%; }
             .preview-wrapper { overflow: visible !important; background: transparent; padding: 0; }
-            .a4-page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; }
+            .a4-page { width: 100%; height: 297mm; box-shadow: none; margin: 0; padding: 15mm; }
         }
     </style>
 </head>
@@ -237,11 +250,21 @@
             <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_sup_city" value="Praha 1, 110 00" oninput="updatePreview()"></div>
             <div class="form-group"><label>IČO</label><input type="text" id="f_sup_ico" value="12345678" oninput="updatePreview()"></div>
         </div>
-        <div class="form-group"><label>DIČ</label><input type="text" id="f_sup_dic" value="CZ12345678" oninput="updatePreview()"></div>
+        <div class="grid-2" style="margin-bottom: 0;">
+            <div class="form-group"><label>DIČ</label><input type="text" id="f_sup_dic" value="CZ12345678" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Telefon</label><input type="text" id="f_sup_phone" value="+420 123 456 789" oninput="updatePreview()"></div>
+        </div>
         
         <h3 style="font-size: 1rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">Bankovní spojení</h3>
         <div class="form-group"><label>Číslo účtu</label><input type="text" id="f_bank" value="123456789/0100" oninput="updatePreview()"></div>
         
+        <h3 style="font-size: 1rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">Razítko a podpis</h3>
+        <div class="form-group">
+            <label>Nahrát obrázek (PNG bez pozadí, JPG)</label>
+            <input type="file" id="f_sup_stamp" accept="image/*" onchange="handleStampUpload(event)">
+            <button class="btn btn-danger" style="margin-top: 5px;" onclick="clearStamp()">Odstranit razítko</button>
+        </div>
+
         <button class="btn" style="margin-top: 20px;" onclick="closeSettings()">Zavřít a uložit</button>
     </div>
 </div>
@@ -293,64 +316,74 @@
     <div class="panel preview-panel">
         <div class="preview-wrapper">
             <div class="a4-page" id="invoice-pdf">
-                <div class="inv-header">
-                    <h1 class="inv-title">Faktura č. <span id="p_number">20230001</span></h1>
-                    <div style="text-align: right;">
-                        <h2 style="margin: 0; font-size: 20px; color: #555;">Daňový doklad</h2>
+                <div>
+                    <div class="inv-header">
+                        <h1 class="inv-title">Faktura č. <span id="p_number">20230001</span></h1>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; font-size: 20px; color: #555;">Daňový doklad</h2>
+                        </div>
                     </div>
-                </div>
 
-                <div class="inv-parties">
-                    <div class="party-box">
-                        <h4>Dodavatel</h4>
-                        <div class="party-text"><strong id="p_sup_name">Moje Firma s.r.o.</strong>
+                    <div class="inv-parties">
+                        <div class="party-box">
+                            <h4>Dodavatel</h4>
+                            <div class="party-text"><strong id="p_sup_name">Moje Firma s.r.o.</strong>
 <span id="p_sup_street">Podnikatelská 123</span>
 <span id="p_sup_city">Praha 1, 110 00</span>
 
 IČO: <span id="p_sup_ico">12345678</span>
-DIČ: <span id="p_sup_dic">CZ12345678</span></div>
-                    </div>
-                    <div class="party-box">
-                        <h4>Odběratel</h4>
-                        <div class="party-text"><strong id="p_cus_name">Zákazník a.s.</strong>
+DIČ: <span id="p_sup_dic">CZ12345678</span>
+<span id="p_sup_phone_wrap">Telefon: <span id="p_sup_phone"></span></span></div>
+                        </div>
+                        <div class="party-box">
+                            <h4>Odběratel</h4>
+                            <div class="party-text"><strong id="p_cus_name">Zákazník a.s.</strong>
 <span id="p_cus_street">Nákupní 456</span>
 <span id="p_cus_city">Brno, 602 00</span>
 
 IČO: <span id="p_cus_ico">87654321</span>
 DIČ: <span id="p_cus_dic">CZ87654321</span></div>
+                        </div>
+                    </div>
+
+                    <div class="inv-details">
+                        <div class="detail-col">
+                            <div class="detail-row"><span class="detail-label">Číslo účtu:</span> <span id="p_bank">123456789/0100</span></div>
+                            <div class="detail-row"><span class="detail-label">Variabilní symbol:</span> <span id="p_vs">20230001</span></div>
+                            <div class="detail-row"><span class="detail-label">Způsob úhrady:</span> <span>Bankovním převodem</span></div>
+                        </div>
+                        <div class="detail-col">
+                            <div class="detail-row"><span class="detail-label">Datum vystavení:</span> <span id="p_date_issue"></span></div>
+                            <div class="detail-row"><span class="detail-label">Datum splatnosti:</span> <strong id="p_date_due"></strong></div>
+                        </div>
+                    </div>
+
+                    <table class="inv-items">
+                        <thead>
+                            <tr>
+                                <th>Popis položky</th>
+                                <th class="text-right">Množství</th>
+                                <th class="text-right">Cena / ks</th>
+                                <th class="text-right">DPH</th>
+                                <th class="text-right">Celkem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="p_items">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="inv-footer">
+                    <div class="stamp-box">
+                        <img id="p_stamp_img" class="stamp-img" src="" alt="Razítko a podpis">
+                        <div class="stamp-line">Razítko a podpis</div>
+                    </div>
+                    <div class="inv-total">
+                        <p style="margin: 0; color: #555;">Celkem k úhradě vč. DPH</p>
+                        <div class="inv-total-text"><span id="p_total_price">0</span> Kč</div>
                     </div>
                 </div>
 
-                <div class="inv-details">
-                    <div class="detail-col">
-                        <div class="detail-row"><span class="detail-label">Číslo účtu:</span> <span id="p_bank">123456789/0100</span></div>
-                        <div class="detail-row"><span class="detail-label">Variabilní symbol:</span> <span id="p_vs">20230001</span></div>
-                        <div class="detail-row"><span class="detail-label">Způsob úhrady:</span> <span>Bankovním převodem</span></div>
-                    </div>
-                    <div class="detail-col">
-                        <div class="detail-row"><span class="detail-label">Datum vystavení:</span> <span id="p_date_issue"></span></div>
-                        <div class="detail-row"><span class="detail-label">Datum splatnosti:</span> <strong id="p_date_due"></strong></div>
-                    </div>
-                </div>
-
-                <table class="inv-items">
-                    <thead>
-                        <tr>
-                            <th>Popis položky</th>
-                            <th class="text-right">Množství</th>
-                            <th class="text-right">Cena / ks</th>
-                            <th class="text-right">DPH</th>
-                            <th class="text-right">Celkem</th>
-                        </tr>
-                    </thead>
-                    <tbody id="p_items">
-                    </tbody>
-                </table>
-
-                <div class="inv-total">
-                    <p style="margin: 0; color: #555;">Celkem k úhradě vč. DPH</p>
-                    <div class="inv-total-text"><span id="p_total_price">0</span> Kč</div>
-                </div>
             </div>
         </div>
     </div>
@@ -362,35 +395,63 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     dueDate.setDate(dueDate.getDate() + 14);
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
-    // Přidáno výchozí DPH do vzorové položky
     let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 21 }];
 
     // --- LOGIKA PRO OVLÁDÁNÍ MODALU ---
-    function openSettings() {
-        document.getElementById('settingsModal').classList.add('active');
-    }
-
-    function closeSettings() {
-        document.getElementById('settingsModal').classList.remove('active');
-    }
-
+    function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
+    function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
     window.onclick = function(event) {
-        const modal = document.getElementById('settingsModal');
-        if (event.target == modal) {
-            closeSettings();
+        if (event.target == document.getElementById('settingsModal')) closeSettings();
+    }
+
+    // --- LOGIKA PRO NAHRÁVÁNÍ A ULOŽENÍ RAZÍTKA ---
+    function handleStampUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                localStorage.setItem('f_sup_stamp_img', base64Image); // Uložíme base64 do paměti
+                updateStampPreview(base64Image);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearStamp() {
+        localStorage.removeItem('f_sup_stamp_img');
+        document.getElementById('f_sup_stamp').value = ''; // Vyčistit input
+        updateStampPreview('');
+    }
+
+    function updateStampPreview(base64Str) {
+        const imgEl = document.getElementById('p_stamp_img');
+        if (base64Str) {
+            imgEl.src = base64Str;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.src = '';
+            imgEl.style.display = 'none';
         }
     }
 
     // --- FUNKCE PRO PRÁCI S ULOŽENÝMI DATY (LOCALSTORAGE) ---
-    const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank'];
+    const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_sup_phone'];
 
     function loadSupplierData() {
+        // Načtení textových dat
         supplierFields.forEach(id => {
             const savedValue = localStorage.getItem(id);
             if (savedValue !== null) {
                 document.getElementById(id).value = savedValue;
             }
         });
+        
+        // Načtení razítka
+        const savedStamp = localStorage.getItem('f_sup_stamp_img');
+        if (savedStamp) {
+            updateStampPreview(savedStamp);
+        }
     }
 
     function saveSupplierData() {
@@ -431,7 +492,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function addItem() {
-        items.push({ name: '', qty: 1, price: 0, dph: 21 }); // Výchozí DPH pro nové položky je 21%
+        items.push({ name: '', qty: 1, price: 0, dph: 21 }); 
         renderItemsForm();
     }
 
@@ -450,7 +511,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function formatCurrency(num) {
-        // Zaokrouhlení a hezký formát s oddělovači tisíců
         return Number(num.toFixed(2)).toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
@@ -461,12 +521,17 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function updatePreview() {
-        const fields = ['number', 'sup_name', 'sup_street', 'sup_city', 'sup_ico', 'sup_dic', 
+        const fields = ['number', 'sup_name', 'sup_street', 'sup_city', 'sup_ico', 'sup_dic', 'sup_phone',
                         'cus_name', 'cus_street', 'cus_city', 'cus_ico', 'cus_dic', 'bank', 'vs'];
         
         fields.forEach(f => {
-            document.getElementById(`p_${f}`).textContent = document.getElementById(`f_${f}`).value;
+            const el = document.getElementById(`p_${f}`);
+            if(el) el.textContent = document.getElementById(`f_${f}`).value;
         });
+
+        // Skrytí řádku pro telefon, pokud je prázdný
+        const phoneWrap = document.getElementById('p_sup_phone_wrap');
+        phoneWrap.style.display = document.getElementById('f_sup_phone').value.trim() === '' ? 'none' : 'block';
 
         document.getElementById('p_date_issue').textContent = formatDate(document.getElementById('f_date_issue').value);
         document.getElementById('p_date_due').textContent = formatDate(document.getElementById('f_date_due').value);
