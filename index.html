@@ -120,7 +120,7 @@
 
         .item-form-row {
             display: grid;
-            grid-template-columns: 3fr 1fr 1.5fr auto;
+            grid-template-columns: 3fr 1fr 1.5fr 1fr auto;
             gap: 10px;
             align-items: end;
             margin-bottom: 10px;
@@ -339,6 +339,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
                             <th>Popis položky</th>
                             <th class="text-right">Množství</th>
                             <th class="text-right">Cena / ks</th>
+                            <th class="text-right">DPH</th>
                             <th class="text-right">Celkem</th>
                         </tr>
                     </thead>
@@ -347,7 +348,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
                 </table>
 
                 <div class="inv-total">
-                    <p style="margin: 0; color: #555;">Celkem k úhradě</p>
+                    <p style="margin: 0; color: #555;">Celkem k úhradě vč. DPH</p>
                     <div class="inv-total-text"><span id="p_total_price">0</span> Kč</div>
                 </div>
             </div>
@@ -361,7 +362,8 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     dueDate.setDate(dueDate.getDate() + 14);
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
-    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000 }];
+    // Přidáno výchozí DPH do vzorové položky
+    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 21 }];
 
     // --- LOGIKA PRO OVLÁDÁNÍ MODALU ---
     function openSettings() {
@@ -372,7 +374,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         document.getElementById('settingsModal').classList.remove('active');
     }
 
-    // Zavření modalu kliknutím mimo něj
     window.onclick = function(event) {
         const modal = document.getElementById('settingsModal');
         if (event.target == modal) {
@@ -418,6 +419,10 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
                         <label>Cena/ks (Kč)</label>
                         <input type="number" value="${item.price}" onchange="updateItem(${index}, 'price', this.value)">
                     </div>
+                    <div class="form-group">
+                        <label>DPH (%)</label>
+                        <input type="number" min="0" value="${item.dph || 0}" onchange="updateItem(${index}, 'dph', this.value)">
+                    </div>
                     <button class="btn btn-danger" style="margin-bottom: 12px;" onclick="removeItem(${index})">X</button>
                 </div>
             `;
@@ -426,7 +431,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function addItem() {
-        items.push({ name: '', qty: 1, price: 0 });
+        items.push({ name: '', qty: 1, price: 0, dph: 21 }); // Výchozí DPH pro nové položky je 21%
         renderItemsForm();
     }
 
@@ -445,7 +450,8 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function formatCurrency(num) {
-        return num.toLocaleString('cs-CZ');
+        // Zaokrouhlení a hezký formát s oddělovači tisíců
+        return Number(num.toFixed(2)).toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
     function formatDate(dateStr) {
@@ -470,21 +476,25 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         let total = 0;
 
         items.forEach(item => {
-            const lineTotal = item.qty * item.price;
-            total += lineTotal;
+            const dphVal = item.dph || 0;
+            const lineTotalBezDph = item.qty * item.price;
+            const dphAmount = lineTotalBezDph * (dphVal / 100);
+            const lineTotalVcetneDph = lineTotalBezDph + dphAmount;
+            
+            total += lineTotalVcetneDph;
+
             tbody.innerHTML += `
                 <tr>
                     <td>${item.name || '<i>(Nezadáno)</i>'}</td>
                     <td class="text-right">${item.qty}</td>
                     <td class="text-right">${formatCurrency(item.price)} Kč</td>
-                    <td class="text-right"><strong>${formatCurrency(lineTotal)} Kč</strong></td>
+                    <td class="text-right">${dphVal} %</td>
+                    <td class="text-right"><strong>${formatCurrency(lineTotalVcetneDph)} Kč</strong></td>
                 </tr>
             `;
         });
 
         document.getElementById('p_total_price').textContent = formatCurrency(total);
-
-        // Automatické uložení dat dodavatele při každé změně obsahu
         saveSupplierData();
     }
 
@@ -533,7 +543,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         });
     }
 
-    // Inicializace při prvním načtení stránky
     loadSupplierData();
     renderItemsForm();
 </script>
