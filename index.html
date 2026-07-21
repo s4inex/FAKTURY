@@ -48,6 +48,15 @@
 
         h1, h2, h3 { margin-top: 0; }
         
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr;
@@ -106,6 +115,8 @@
         .btn-secondary:hover { background: #059669; }
         .btn-outline { background: white; color: var(--text); border: 2px solid var(--border); }
         .btn-outline:hover { background: #f9fafb; border-color: #d1d5db; }
+        
+        .btn-small { width: auto; margin: 0; padding: 8px 12px; font-size: 0.9rem; }
 
         .item-form-row {
             display: grid;
@@ -120,6 +131,47 @@
         @media (max-width: 600px) {
             .item-form-row { grid-template-columns: 1fr; }
         }
+
+        /* MODAL STYLY */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.25rem; }
+        .close-btn {
+            background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: #6b7280; padding: 0;
+        }
+        .close-btn:hover { color: #111827; }
 
         .preview-wrapper { overflow-x: auto; background: #e5e7eb; padding: 10px; border-radius: 8px; }
         
@@ -157,16 +209,11 @@
         .inv-total { text-align: right; margin-top: 30px; }
         .inv-total-text { font-size: 24px; font-weight: bold; }
         
-        .mb-4 { margin-bottom: 1rem; }
-
         /* TISKOVÉ STYLY */
         @media print {
-            @page {
-                size: A4;
-                margin: 0;
-            }
+            @page { size: A4; margin: 0; }
             body { padding: 0; margin: 0; background: white; }
-            .form-panel { display: none !important; }
+            .form-panel, .modal { display: none !important; }
             .preview-panel { padding: 0; margin: 0; box-shadow: none; width: 100%; }
             .preview-wrapper { overflow: visible !important; background: transparent; padding: 0; }
             .a4-page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; }
@@ -175,46 +222,62 @@
 </head>
 <body>
 
+<!-- MODAL NASTAVENÍ DODAVATELE -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚙️ Nastavení dodavatele</h2>
+            <button class="close-btn" onclick="closeSettings()">&times;</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0;">Tyto údaje se automaticky ukládají do prohlížeče a platí pro všechny nové faktury.</p>
+        
+        <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_sup_name" value="Moje Firma s.r.o." oninput="updatePreview()"></div>
+        <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_sup_street" value="Podnikatelská 123" oninput="updatePreview()"></div>
+        <div class="grid-2" style="margin-bottom: 0;">
+            <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_sup_city" value="Praha 1, 110 00" oninput="updatePreview()"></div>
+            <div class="form-group"><label>IČO</label><input type="text" id="f_sup_ico" value="12345678" oninput="updatePreview()"></div>
+        </div>
+        <div class="form-group"><label>DIČ</label><input type="text" id="f_sup_dic" value="CZ12345678" oninput="updatePreview()"></div>
+        
+        <h3 style="font-size: 1rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">Bankovní spojení</h3>
+        <div class="form-group"><label>Číslo účtu</label><input type="text" id="f_bank" value="123456789/0100" oninput="updatePreview()"></div>
+        
+        <button class="btn" style="margin-top: 20px;" onclick="closeSettings()">Zavřít a uložit</button>
+    </div>
+</div>
+
 <div class="container">
     <div class="panel form-panel">
-        <h2 class="mb-4">⚙️ Údaje faktury</h2>
+        <div class="header-flex">
+            <h2 style="margin: 0;">📝 Údaje faktury</h2>
+            <button class="btn btn-outline btn-small" onclick="openSettings()">⚙️ Nastavení dodavatele</button>
+        </div>
         
-        <div class="form-group">
-            <label>Číslo faktury</label>
-            <input type="text" id="f_number" value="20230001" oninput="updatePreview()">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Číslo faktury</label>
+                <input type="text" id="f_number" value="20230001" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Variabilní symbol</label>
+                <input type="text" id="f_vs" value="20230001" oninput="updatePreview()">
+            </div>
         </div>
 
-        <div class="grid-2">
-            <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 10px;">
-                <legend style="font-weight: bold; font-size: 0.9rem;">Dodavatel (Ukládá se automaticky)</legend>
-                <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_sup_name" value="Moje Firma s.r.o." oninput="updatePreview()"></div>
-                <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_sup_street" value="Podnikatelská 123" oninput="updatePreview()"></div>
-                <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_sup_city" value="Praha 1, 110 00" oninput="updatePreview()"></div>
-                <div class="form-group"><label>IČO</label><input type="text" id="f_sup_ico" value="12345678" oninput="updatePreview()"></div>
-                <div class="form-group"><label>DIČ</label><input type="text" id="f_sup_dic" value="CZ12345678" oninput="updatePreview()"></div>
-            </fieldset>
-
-            <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 10px;">
-                <legend style="font-weight: bold; font-size: 0.9rem;">Odběratel</legend>
-                <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_cus_name" value="Zákazník a.s." oninput="updatePreview()"></div>
+        <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+            <legend style="font-weight: bold; font-size: 0.9rem;">Odběratel (Zákazník)</legend>
+            <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_cus_name" value="Zákazník a.s." oninput="updatePreview()"></div>
+            <div class="grid-2" style="margin-bottom: 0;">
                 <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_cus_street" value="Nákupní 456" oninput="updatePreview()"></div>
                 <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_cus_city" value="Brno, 602 00" oninput="updatePreview()"></div>
                 <div class="form-group"><label>IČO</label><input type="text" id="f_cus_ico" value="87654321" oninput="updatePreview()"></div>
                 <div class="form-group"><label>DIČ</label><input type="text" id="f_cus_dic" value="CZ87654321" oninput="updatePreview()"></div>
-            </fieldset>
-        </div>
+            </div>
+        </fieldset>
 
         <div class="grid-2">
-            <div>
-                <h3 style="font-size: 1rem;">Platební údaje</h3>
-                <div class="form-group"><label>Číslo účtu</label><input type="text" id="f_bank" value="123456789/0100" oninput="updatePreview()"></div>
-                <div class="form-group"><label>Variabilní symbol</label><input type="text" id="f_vs" value="20230001" oninput="updatePreview()"></div>
-            </div>
-            <div>
-                <h3 style="font-size: 1rem;">Data</h3>
-                <div class="form-group"><label>Datum vystavení</label><input type="date" id="f_date_issue" oninput="updatePreview()"></div>
-                <div class="form-group"><label>Datum splatnosti</label><input type="date" id="f_date_due" oninput="updatePreview()"></div>
-            </div>
+            <div class="form-group"><label>Datum vystavení</label><input type="date" id="f_date_issue" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Datum splatnosti</label><input type="date" id="f_date_due" oninput="updatePreview()"></div>
         </div>
 
         <h3 style="font-size: 1rem; border-top: 1px solid var(--border); padding-top: 15px;">Položky faktury</h3>
@@ -299,6 +362,23 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
     let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000 }];
+
+    // --- LOGIKA PRO OVLÁDÁNÍ MODALU ---
+    function openSettings() {
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    // Zavření modalu kliknutím mimo něj
+    window.onclick = function(event) {
+        const modal = document.getElementById('settingsModal');
+        if (event.target == modal) {
+            closeSettings();
+        }
+    }
 
     // --- FUNKCE PRO PRÁCI S ULOŽENÝMI DATY (LOCALSTORAGE) ---
     const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank'];
@@ -453,7 +533,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         });
     }
 
-    // Při prvním načtení stránky načteme data a teprve pak vykreslíme formulář a náhled
+    // Inicializace při prvním načtení stránky
     loadSupplierData();
     renderItemsForm();
 </script>
