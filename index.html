@@ -79,6 +79,8 @@
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         input:focus { border-color: var(--primary); }
@@ -94,6 +96,7 @@
             font-size: 1rem;
             transition: background 0.2s;
             width: 100%;
+            margin-bottom: 10px;
         }
 
         .btn:hover { background: var(--primary-hover); }
@@ -101,6 +104,8 @@
         .btn-danger:hover { background: #dc2626; }
         .btn-secondary { background: #10b981; margin-bottom: 20px; }
         .btn-secondary:hover { background: #059669; }
+        .btn-outline { background: white; color: var(--text); border: 2px solid var(--border); }
+        .btn-outline:hover { background: #f9fafb; border-color: #d1d5db; }
 
         .item-form-row {
             display: grid;
@@ -153,6 +158,19 @@
         .inv-total-text { font-size: 24px; font-weight: bold; }
         
         .mb-4 { margin-bottom: 1rem; }
+
+        /* TISKOVÉ STYLY (Pro nativní generování PDF v prohlížeči) */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            body { padding: 0; margin: 0; background: white; }
+            .form-panel { display: none !important; }
+            .preview-panel { padding: 0; margin: 0; box-shadow: none; width: 100%; }
+            .preview-wrapper { overflow: visible !important; background: transparent; padding: 0; }
+            .a4-page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; }
+        }
     </style>
 </head>
 <body>
@@ -203,7 +221,11 @@
         <div id="items-container"></div>
         <button class="btn btn-secondary" onclick="addItem()">+ Přidat položku</button>
 
-        <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF</button>
+        <div style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
+            <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF (Přímé stažení)</button>
+            <button class="btn btn-outline" style="font-size: 1.1rem; padding: 15px;" onclick="window.print()">🖨️ Nativní tisk / Uložit jako PDF (Doporučeno)</button>
+            <p style="font-size: 0.8rem; color: #6b7280; text-align: center;">Pokud první tlačítko zlobí, druhé (Nativní tisk) funguje bezchybně - stačí v dialogu vybrat "Uložit jako PDF". Text pak lze krásně kopírovat.</p>
+        </div>
     </div>
 
     <div class="panel preview-panel">
@@ -219,25 +241,21 @@
                 <div class="inv-parties">
                     <div class="party-box">
                         <h4>Dodavatel</h4>
-                        <div class="party-text">
-<strong id="p_sup_name">Moje Firma s.r.o.</strong>
+                        <div class="party-text"><strong id="p_sup_name">Moje Firma s.r.o.</strong>
 <span id="p_sup_street">Podnikatelská 123</span>
 <span id="p_sup_city">Praha 1, 110 00</span>
 
 IČO: <span id="p_sup_ico">12345678</span>
-DIČ: <span id="p_sup_dic">CZ12345678</span>
-                        </div>
+DIČ: <span id="p_sup_dic">CZ12345678</span></div>
                     </div>
                     <div class="party-box">
                         <h4>Odběratel</h4>
-                        <div class="party-text">
-<strong id="p_cus_name">Zákazník a.s.</strong>
+                        <div class="party-text"><strong id="p_cus_name">Zákazník a.s.</strong>
 <span id="p_cus_street">Nákupní 456</span>
 <span id="p_cus_city">Brno, 602 00</span>
 
 IČO: <span id="p_cus_ico">87654321</span>
-DIČ: <span id="p_cus_dic">CZ87654321</span>
-                        </div>
+DIČ: <span id="p_cus_dic">CZ87654321</span></div>
                     </div>
                 </div>
 
@@ -291,7 +309,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
             container.innerHTML += `
                 <div class="item-form-row">
                     <div class="form-group">
-                        <label>Název položky</label>
+                        <label>Název</label>
                         <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)">
                     </div>
                     <div class="form-group">
@@ -375,26 +393,16 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
         btn.innerHTML = "⏳ Generuji PDF...";
         btn.disabled = true;
 
-        const originalElement = document.getElementById('invoice-pdf');
+        const element = document.getElementById('invoice-pdf');
+        const wrapper = document.querySelector('.preview-wrapper');
         
-        // Vytvoříme dočasný skrytý kontejner mimo hlavní dokument
-        // To zabrání odříznutí PDF kvůli scrollování nebo úzkému displeji telefonu
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'fixed';
-        tempContainer.style.top = '0';
-        tempContainer.style.left = '0';
-        tempContainer.style.width = '210mm'; // Přesná šířka A4
-        tempContainer.style.zIndex = '-9999'; // Bude skryté za ostatními prvky
-        tempContainer.style.background = 'white';
+        // OPRAVA PRO MOBILY A PC: Zrušení scrollování obalu a přesun nahoru
+        // html2canvas nesmí fotit "odskrolovaný" nebo oříznutý prvek
+        const originalOverflow = wrapper.style.overflowX;
+        wrapper.style.overflowX = 'visible';
         
-        // Zkopírujeme náhled faktury
-        const clone = originalElement.cloneNode(true);
-        // Odstraníme stíny a centrování, které dělají problém při tisku
-        clone.style.boxShadow = 'none';
-        clone.style.margin = '0';
-        
-        tempContainer.appendChild(clone);
-        document.body.appendChild(tempContainer);
+        const currentScrollY = window.scrollY;
+        window.scrollTo(0, 0); // Odskrolování nahoru zabrání bílému pruhu
 
         const invNum = document.getElementById('f_number').value || 'nova';
         
@@ -405,28 +413,29 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
             html2canvas:  { 
                 scale: 2, 
                 useCORS: true,
-                scrollX: 0,
                 scrollY: 0,
-                windowWidth: 1000 // Simuluje PC zobrazení pro knihovnu i na mobilu
+                scrollX: 0
             },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdf().set(opt).from(tempContainer).save().then(() => {
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Návrat zobrazení do normálu
+            wrapper.style.overflowX = originalOverflow;
+            window.scrollTo(0, currentScrollY);
+            
             btn.innerHTML = originalText;
             btn.disabled = false;
-            // Po vygenerování smažeme dočasný kontejner
-            document.body.removeChild(tempContainer);
         }).catch(err => {
             console.error("Chyba při generování:", err);
+            wrapper.style.overflowX = originalOverflow;
+            window.scrollTo(0, currentScrollY);
             btn.innerHTML = "❌ Chyba (zkuste znovu)";
             btn.disabled = false;
-            document.body.removeChild(tempContainer);
         });
     }
 
     renderItemsForm();
 </script>
-
 </body>
 </html>
