@@ -61,6 +61,11 @@
             gap: 15px;
             margin-bottom: 20px;
         }
+        
+        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: Zabraňuje přetečení gridu */
+        .grid-2 > div {
+            min-width: 0; 
+        }
 
         @media (min-width: 600px) {
             .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -79,6 +84,7 @@
             color: #4b5563;
         }
 
+        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: min-width: 0 a max-width: 100% drží pole v displeji */
         input {
             padding: 8px 12px;
             border: 1px solid var(--border);
@@ -87,6 +93,8 @@
             outline: none;
             transition: border-color 0.2s;
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
             box-sizing: border-box;
         }
 
@@ -96,6 +104,12 @@
         }
 
         input:focus { border-color: var(--primary); }
+        
+        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: Zamezí natažení ohraničení (fieldsetu) mimo displej */
+        fieldset {
+            min-width: 0;
+            box-sizing: border-box;
+        }
 
         .btn {
             background: var(--primary);
@@ -120,6 +134,27 @@
         .btn-outline:hover { background: #f9fafb; border-color: #d1d5db; }
         
         .btn-small { width: auto; margin: 0; padding: 8px 12px; font-size: 0.9rem; }
+
+        /* OPRAVA MOBILNÍHO ZOBRAZENÍ PRO SPRÁVCE VZORŮ */
+        .template-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .template-controls {
+            display: flex;
+            gap: 10px;
+        }
+        @media (max-width: 600px) {
+            .template-controls {
+                flex-direction: column; /* Na mobilech pod sebe */
+            }
+            .template-controls .btn {
+                width: 100%; /* Na mobilech roztáhnout na celou šířku */
+            }
+        }
 
         .item-form-row {
             display: grid;
@@ -268,11 +303,11 @@
     <div class="container">
     <div class="panel form-panel">
         
-        <!-- PŘIDÁNO: OVLÁDÁNÍ VZORŮ -->
-        <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <!-- OPRAVENÝ SPRÁVCE VZORŮ (využívá nové třídy) -->
+        <div class="template-box">
             <label style="color: #4338ca; font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 10px;">📂 Načíst uložený vzor faktury</label>
-            <div style="display: flex; gap: 10px;">
-                <select id="template-select" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #a5b4fc; background: white; outline: none;"></select>
+            <div class="template-controls">
+                <select id="template-select" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #a5b4fc; background: white; outline: none; width: 100%; box-sizing: border-box;"></select>
                 <button class="btn btn-small" style="background: #4f46e5; margin: 0;" onclick="loadTemplate()">Načíst</button>
                 <button class="btn btn-danger btn-small" style="margin: 0;" onclick="deleteTemplate()">Smazat</button>
             </div>
@@ -315,7 +350,6 @@
         <button class="btn btn-secondary" onclick="addItem()">+ Přidat položku</button>
 
         <div style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
-            <!-- PŘIDÁNO: TLAČÍTKO ULOŽIT VZOR -->
             <button class="btn btn-outline" style="font-size: 1rem; padding: 12px; margin-bottom: 15px; border-color: #10b981; color: #047857; background: #ecfdf5; transition: all 0.2s;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'" onclick="saveAsTemplate()">💾 Uložit aktuální fakturu jako vzor</button>
             
             <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF (Přímé stažení)</button>
@@ -416,7 +450,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const base64Image = e.target.result;
-                localStorage.setItem('f_sup_stamp_img', base64Image); // Uložíme base64 do paměti
+                localStorage.setItem('f_sup_stamp_img', base64Image);
                 updateStampPreview(base64Image);
             };
             reader.readAsDataURL(file);
@@ -511,7 +545,6 @@
         
         const t = invoiceTemplates[name];
         
-        // Načteme jednotlivá pole vzoru
         const fields = ['f_number', 'f_vs', 'f_cus_name', 'f_cus_street', 'f_cus_city', 'f_cus_ico', 'f_cus_dic', 'f_date_issue', 'f_date_due'];
         fields.forEach(f => {
             if(t[f] !== undefined) document.getElementById(f).value = t[f];
@@ -521,7 +554,7 @@
             items = JSON.parse(JSON.stringify(t.items));
         }
         
-        renderItemsForm(); // Také zavolá updatePreview()
+        renderItemsForm();
         alert(`Vzor '${name}' byl načten.`);
     }
 
@@ -605,7 +638,6 @@
         fields.forEach(f => {
             const el = document.getElementById(`p_${f}`);
             if(el) {
-                // Přidáno bezpečné předání pro vícestránkové texty u dodavatele
                 let val = document.getElementById(`f_${f}`) ? document.getElementById(`f_${f}`).value : '';
                 el.textContent = val;
             }
@@ -661,8 +693,7 @@
 
         const invNum = document.getElementById('f_number').value || 'nova';
         
-        // Zabezpečení formátu proti nepovoleným znakům ve jménu souboru (např. lomítko z čísla faktury)
-        const safeFileName = `Faktura_${invNum.replace(/\/|\//g, '-')}.pdf`;
+        const safeFileName = `Faktura_${invNum.replace(/\//g, '-')}.pdf`;
         
         const opt = {
             margin:       0,
@@ -692,7 +723,6 @@
         });
     }
 
-    // Inicializace
     loadSupplierData();
     renderTemplateList();
     renderItemsForm();
