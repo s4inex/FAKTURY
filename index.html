@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generátor Faktur</title>
-    <!-- Knihovna pro převod HTML do PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -31,7 +30,6 @@
             margin: 0 auto;
         }
 
-        /* Layout pro PC */
         @media (min-width: 1024px) {
             .container {
                 flex-direction: row;
@@ -104,7 +102,6 @@
         .btn-secondary { background: #10b981; margin-bottom: 20px; }
         .btn-secondary:hover { background: #059669; }
 
-        /* ITEM FORM TABLE */
         .item-form-row {
             display: grid;
             grid-template-columns: 3fr 1fr 1.5fr auto;
@@ -119,7 +116,6 @@
             .item-form-row { grid-template-columns: 1fr; }
         }
 
-        /* A4 PREVIEW STYLES */
         .preview-wrapper { overflow-x: auto; background: #e5e7eb; padding: 10px; border-radius: 8px; }
         
         .a4-page {
@@ -156,15 +152,12 @@
         .inv-total { text-align: right; margin-top: 30px; }
         .inv-total-text { font-size: 24px; font-weight: bold; }
         
-        /* Utility */
         .mb-4 { margin-bottom: 1rem; }
-        .mt-4 { margin-top: 1rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- FORMULÁŘ -->
     <div class="panel form-panel">
         <h2 class="mb-4">⚙️ Údaje faktury</h2>
         
@@ -174,7 +167,6 @@
         </div>
 
         <div class="grid-2">
-            <!-- Dodavatel -->
             <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 10px;">
                 <legend style="font-weight: bold; font-size: 0.9rem;">Dodavatel</legend>
                 <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_sup_name" value="Moje Firma s.r.o." oninput="updatePreview()"></div>
@@ -184,7 +176,6 @@
                 <div class="form-group"><label>DIČ</label><input type="text" id="f_sup_dic" value="CZ12345678" oninput="updatePreview()"></div>
             </fieldset>
 
-            <!-- Odběratel -->
             <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 10px;">
                 <legend style="font-weight: bold; font-size: 0.9rem;">Odběratel</legend>
                 <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_cus_name" value="Zákazník a.s." oninput="updatePreview()"></div>
@@ -215,12 +206,9 @@
         <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF</button>
     </div>
 
-    <!-- NÁHLED -->
     <div class="panel preview-panel">
         <div class="preview-wrapper">
-            <!-- Tento DIV se převede do PDF -->
             <div class="a4-page" id="invoice-pdf">
-                
                 <div class="inv-header">
                     <h1 class="inv-title">Faktura č. <span id="p_number">20230001</span></h1>
                     <div style="text-align: right;">
@@ -275,7 +263,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
                         </tr>
                     </thead>
                     <tbody id="p_items">
-                        <!-- Položky se generují přes JS -->
                     </tbody>
                 </table>
 
@@ -283,22 +270,18 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
                     <p style="margin: 0; color: #555;">Celkem k úhradě</p>
                     <div class="inv-total-text"><span id="p_total_price">0</span> Kč</div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Předvyplnění dnešního data
     document.getElementById('f_date_issue').valueAsDate = new Date();
     let dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 14); // Splatnost 14 dní
+    dueDate.setDate(dueDate.getDate() + 14);
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
-    let items = [
-        { name: 'Tvorba webových stránek', qty: 1, price: 15000 }
-    ];
+    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000 }];
 
     function renderItemsForm() {
         const container = document.getElementById('items-container');
@@ -356,7 +339,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
     }
 
     function updatePreview() {
-        // Textová pole
         const fields = ['number', 'sup_name', 'sup_street', 'sup_city', 'sup_ico', 'sup_dic', 
                         'cus_name', 'cus_street', 'cus_city', 'cus_ico', 'cus_dic', 'bank', 'vs'];
         
@@ -364,11 +346,9 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
             document.getElementById(`p_${f}`).textContent = document.getElementById(`f_${f}`).value;
         });
 
-        // Data
         document.getElementById('p_date_issue').textContent = formatDate(document.getElementById('f_date_issue').value);
         document.getElementById('p_date_due').textContent = formatDate(document.getElementById('f_date_due').value);
 
-        // Položky faktury
         const tbody = document.getElementById('p_items');
         tbody.innerHTML = '';
         let total = 0;
@@ -386,35 +366,65 @@ DIČ: <span id="p_cus_dic">CZ87654321</span>
             `;
         });
 
-        // Celková cena
         document.getElementById('p_total_price').textContent = formatCurrency(total);
     }
 
     function generatePDF() {
-        const element = document.getElementById('invoice-pdf');
+        const btn = document.querySelector('button[onclick="generatePDF()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ Generuji PDF...";
+        btn.disabled = true;
+
+        const originalElement = document.getElementById('invoice-pdf');
+        
+        // Vytvoříme dočasný skrytý kontejner mimo hlavní dokument
+        // To zabrání odříznutí PDF kvůli scrollování nebo úzkému displeji telefonu
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'fixed';
+        tempContainer.style.top = '0';
+        tempContainer.style.left = '0';
+        tempContainer.style.width = '210mm'; // Přesná šířka A4
+        tempContainer.style.zIndex = '-9999'; // Bude skryté za ostatními prvky
+        tempContainer.style.background = 'white';
+        
+        // Zkopírujeme náhled faktury
+        const clone = originalElement.cloneNode(true);
+        // Odstraníme stíny a centrování, které dělají problém při tisku
+        clone.style.boxShadow = 'none';
+        clone.style.margin = '0';
+        
+        tempContainer.appendChild(clone);
+        document.body.appendChild(tempContainer);
+
         const invNum = document.getElementById('f_number').value || 'nova';
         
         const opt = {
             margin:       0,
             filename:     `Faktura_${invNum}.pdf`,
             image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 2, useCORS: true },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1000 // Simuluje PC zobrazení pro knihovnu i na mobilu
+            },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Přidání vizuálního indikátoru, že se PDF generuje
-        const btn = document.querySelector('button[onclick="generatePDF()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "⏳ Generuji PDF...";
-        btn.disabled = true;
-
-        html2pdf().set(opt).from(element).save().then(() => {
+        html2pdf().set(opt).from(tempContainer).save().then(() => {
             btn.innerHTML = originalText;
             btn.disabled = false;
+            // Po vygenerování smažeme dočasný kontejner
+            document.body.removeChild(tempContainer);
+        }).catch(err => {
+            console.error("Chyba při generování:", err);
+            btn.innerHTML = "❌ Chyba (zkuste znovu)";
+            btn.disabled = false;
+            document.body.removeChild(tempContainer);
         });
     }
 
-    // Inicializace při prvním načtení
     renderItemsForm();
 </script>
 
