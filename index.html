@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
+<!DOCTYPE html><html lang="cs"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generátor Faktur</title>
@@ -182,7 +180,7 @@
         
         .a4-page {
             width: 210mm;
-            min-height: 296mm; /* ZDE JE OPRAVA: 296mm místo 297mm zabrání prázdné 2. straně */
+            min-height: 296mm;
             background: white;
             margin: 0 auto;
             padding: 20mm;
@@ -193,7 +191,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Pojistka proti neviditelnému přetečení */
+            overflow: hidden;
         }
 
         .inv-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 30px; }
@@ -232,12 +230,10 @@
             .preview-wrapper { overflow: visible !important; background: transparent; padding: 0; }
             .a4-page { width: 100%; height: auto; min-height: 296mm; box-shadow: none; margin: 0; padding: 15mm; overflow: visible;}
         }
-    </style>
-</head>
-<body>
+    </style></head><body>
 
-<!-- MODAL NASTAVENÍ DODAVATELE -->
-<div id="settingsModal" class="modal">
+    <!-- MODAL NASTAVENÍ DODAVATELE -->
+    <div id="settingsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h2>⚙️ Nastavení dodavatele</h2>
@@ -267,11 +263,21 @@
         </div>
 
         <button class="btn" style="margin-top: 20px;" onclick="closeSettings()">Zavřít a uložit</button>
-    </div>
-</div>
-
-<div class="container">
+    </div></div>
+    
+    <div class="container">
     <div class="panel form-panel">
+        
+        <!-- PŘIDÁNO: OVLÁDÁNÍ VZORŮ -->
+        <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <label style="color: #4338ca; font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 10px;">📂 Načíst uložený vzor faktury</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="template-select" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #a5b4fc; background: white; outline: none;"></select>
+                <button class="btn btn-small" style="background: #4f46e5; margin: 0;" onclick="loadTemplate()">Načíst</button>
+                <button class="btn btn-danger btn-small" style="margin: 0;" onclick="deleteTemplate()">Smazat</button>
+            </div>
+        </div>
+
         <div class="header-flex">
             <h2 style="margin: 0;">📝 Údaje faktury</h2>
             <button class="btn btn-outline btn-small" onclick="openSettings()">⚙️ Nastavení dodavatele</button>
@@ -280,11 +286,11 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>Číslo faktury</label>
-                <input type="text" id="f_number" value="20230001" oninput="updatePreview()">
+                <input type="text" id="f_number" oninput="updatePreview()">
             </div>
             <div class="form-group">
                 <label>Variabilní symbol</label>
-                <input type="text" id="f_vs" value="20230001" oninput="updatePreview()">
+                <input type="text" id="f_vs" oninput="updatePreview()">
             </div>
         </div>
 
@@ -309,6 +315,9 @@
         <button class="btn btn-secondary" onclick="addItem()">+ Přidat položku</button>
 
         <div style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
+            <!-- PŘIDÁNO: TLAČÍTKO ULOŽIT VZOR -->
+            <button class="btn btn-outline" style="font-size: 1rem; padding: 12px; margin-bottom: 15px; border-color: #10b981; color: #047857; background: #ecfdf5; transition: all 0.2s;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'" onclick="saveAsTemplate()">💾 Uložit aktuální fakturu jako vzor</button>
+            
             <button class="btn" style="font-size: 1.1rem; padding: 15px;" onclick="generatePDF()">📄 Stáhnout PDF (Přímé stažení)</button>
             <button class="btn btn-outline" style="font-size: 1.1rem; padding: 15px;" onclick="window.print()">🖨️ Nativní tisk / Uložit jako PDF</button>
         </div>
@@ -319,7 +328,7 @@
             <div class="a4-page" id="invoice-pdf">
                 <div>
                     <div class="inv-header">
-                        <h1 class="inv-title">Faktura č. <span id="p_number">20230001</span></h1>
+                        <h1 class="inv-title">Faktura č. <span id="p_number"></span></h1>
                         <div style="text-align: right;">
                             <h2 style="margin: 0; font-size: 20px; color: #555;">Daňový doklad</h2>
                         </div>
@@ -328,29 +337,18 @@
                     <div class="inv-parties">
                         <div class="party-box">
                             <h4>Dodavatel</h4>
-                            <div class="party-text"><strong id="p_sup_name">Moje Firma s.r.o.</strong>
-<span id="p_sup_street">Podnikatelská 123</span>
-<span id="p_sup_city">Praha 1, 110 00</span>
-
-IČO: <span id="p_sup_ico">12345678</span>
-DIČ: <span id="p_sup_dic">CZ12345678</span>
-<span id="p_sup_phone_wrap">Telefon: <span id="p_sup_phone"></span></span></div>
+                            <div class="party-text"><strong id="p_sup_name"></strong><br><span id="p_sup_street"></span><br><span id="p_sup_city"></span><br><br>IČO: <span id="p_sup_ico"></span><br>DIČ: <span id="p_sup_dic"></span><br><span id="p_sup_phone_wrap">Telefon: <span id="p_sup_phone"></span></span></div>
                         </div>
                         <div class="party-box">
                             <h4>Odběratel</h4>
-                            <div class="party-text"><strong id="p_cus_name">Zákazník a.s.</strong>
-<span id="p_cus_street">Nákupní 456</span>
-<span id="p_cus_city">Brno, 602 00</span>
-
-IČO: <span id="p_cus_ico">87654321</span>
-DIČ: <span id="p_cus_dic">CZ87654321</span></div>
+                            <div class="party-text"><strong id="p_cus_name"></strong><br><span id="p_cus_street"></span><br><span id="p_cus_city"></span><br><br>IČO: <span id="p_cus_ico"></span><br>DIČ: <span id="p_cus_dic"></span></div>
                         </div>
                     </div>
 
                     <div class="inv-details">
                         <div class="detail-col">
-                            <div class="detail-row"><span class="detail-label">Číslo účtu:</span> <span id="p_bank">123456789/0100</span></div>
-                            <div class="detail-row"><span class="detail-label">Variabilní symbol:</span> <span id="p_vs">20230001</span></div>
+                            <div class="detail-row"><span class="detail-label">Číslo účtu:</span> <span id="p_bank"></span></div>
+                            <div class="detail-row"><span class="detail-label">Variabilní symbol:</span> <span id="p_vs"></span></div>
                             <div class="detail-row"><span class="detail-label">Způsob úhrady:</span> <span>Bankovním převodem</span></div>
                         </div>
                         <div class="detail-col">
@@ -387,16 +385,22 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
 
             </div>
         </div>
-    </div>
-</div>
-
-<script>
+    </div></div><script>
+    
+    // --- INICIALIZACE DATA A ČÍSLA FAKTURY ---
     document.getElementById('f_date_issue').valueAsDate = new Date();
     let dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
     document.getElementById('f_date_due').valueAsDate = dueDate;
 
-    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
+    // Generování defaultního čísla faktury MM/YYYY
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    document.getElementById('f_number').value = `${mm}/${yyyy}`;
+    document.getElementById('f_vs').value = `${yyyy}${mm}001`;
+
+    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 21 }];
 
     // --- LOGIKA PRO OVLÁDÁNÍ MODALU ---
     function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
@@ -421,7 +425,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
 
     function clearStamp() {
         localStorage.removeItem('f_sup_stamp_img');
-        document.getElementById('f_sup_stamp').value = ''; // Vyčistit input
+        document.getElementById('f_sup_stamp').value = ''; 
         updateStampPreview('');
     }
 
@@ -440,7 +444,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_sup_phone'];
 
     function loadSupplierData() {
-        // Načtení textových dat
         supplierFields.forEach(id => {
             const savedValue = localStorage.getItem(id);
             if (savedValue !== null) {
@@ -448,7 +451,6 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
             }
         });
         
-        // Načtení razítka
         const savedStamp = localStorage.getItem('f_sup_stamp_img');
         if (savedStamp) {
             updateStampPreview(savedStamp);
@@ -459,6 +461,81 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         supplierFields.forEach(id => {
             localStorage.setItem(id, document.getElementById(id).value);
         });
+    }
+
+    // --- SPRÁVA VZORŮ FAKTUR ---
+    let invoiceTemplates = JSON.parse(localStorage.getItem('invoice_templates')) || {};
+
+    function renderTemplateList() {
+        const select = document.getElementById('template-select');
+        select.innerHTML = '<option value="">-- Vyberte uložený vzor --</option>';
+        for (let name in invoiceTemplates) {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        }
+    }
+
+    function saveAsTemplate() {
+        const name = prompt("Zadejte název pro tento vzor (např. 'Paušál - Novák s.r.o.'):");
+        if (!name) return;
+
+        const templateData = {
+            f_number: document.getElementById('f_number').value,
+            f_vs: document.getElementById('f_vs').value,
+            f_cus_name: document.getElementById('f_cus_name').value,
+            f_cus_street: document.getElementById('f_cus_street').value,
+            f_cus_city: document.getElementById('f_cus_city').value,
+            f_cus_ico: document.getElementById('f_cus_ico').value,
+            f_cus_dic: document.getElementById('f_cus_dic').value,
+            f_date_issue: document.getElementById('f_date_issue').value,
+            f_date_due: document.getElementById('f_date_due').value,
+            items: JSON.parse(JSON.stringify(items))
+        };
+        
+        invoiceTemplates[name] = templateData;
+        localStorage.setItem('invoice_templates', JSON.stringify(invoiceTemplates));
+        renderTemplateList();
+        
+        document.getElementById('template-select').value = name;
+        alert(`Vzor '${name}' byl úspěšně uložen.`);
+    }
+
+    function loadTemplate() {
+        const name = document.getElementById('template-select').value;
+        if (!name || !invoiceTemplates[name]) {
+            alert("Vyberte platný vzor ze seznamu.");
+            return;
+        }
+        
+        const t = invoiceTemplates[name];
+        
+        // Načteme jednotlivá pole vzoru
+        const fields = ['f_number', 'f_vs', 'f_cus_name', 'f_cus_street', 'f_cus_city', 'f_cus_ico', 'f_cus_dic', 'f_date_issue', 'f_date_due'];
+        fields.forEach(f => {
+            if(t[f] !== undefined) document.getElementById(f).value = t[f];
+        });
+        
+        if (t.items && Array.isArray(t.items)) {
+            items = JSON.parse(JSON.stringify(t.items));
+        }
+        
+        renderItemsForm(); // Také zavolá updatePreview()
+        alert(`Vzor '${name}' byl načten.`);
+    }
+
+    function deleteTemplate() {
+        const name = document.getElementById('template-select').value;
+        if (!name) {
+            alert("Nejprve vyberte vzor ke smazání.");
+            return;
+        }
+        if (confirm(`Opravdu chcete trvale smazat vzor '${name}'?`)) {
+            delete invoiceTemplates[name];
+            localStorage.setItem('invoice_templates', JSON.stringify(invoiceTemplates));
+            renderTemplateList();
+        }
     }
     // ---------------------------------------------------------
 
@@ -493,7 +570,7 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
     }
 
     function addItem() {
-        items.push({ name: '', qty: 1, price: 0, dph: 0 }); 
+        items.push({ name: '', qty: 1, price: 0, dph: 21 }); 
         renderItemsForm();
     }
 
@@ -527,10 +604,13 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         
         fields.forEach(f => {
             const el = document.getElementById(`p_${f}`);
-            if(el) el.textContent = document.getElementById(`f_${f}`).value;
+            if(el) {
+                // Přidáno bezpečné předání pro vícestránkové texty u dodavatele
+                let val = document.getElementById(`f_${f}`) ? document.getElementById(`f_${f}`).value : '';
+                el.textContent = val;
+            }
         });
 
-        // Skrytí řádku pro telefon, pokud je prázdný
         const phoneWrap = document.getElementById('p_sup_phone_wrap');
         phoneWrap.style.display = document.getElementById('f_sup_phone').value.trim() === '' ? 'none' : 'block';
 
@@ -581,9 +661,12 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
 
         const invNum = document.getElementById('f_number').value || 'nova';
         
+        // Zabezpečení formátu proti nepovoleným znakům ve jménu souboru (např. lomítko z čísla faktury)
+        const safeFileName = `Faktura_${invNum.replace(/\/|\//g, '-')}.pdf`;
+        
         const opt = {
             margin:       0,
-            filename:     `Faktura_${invNum}.pdf`,
+            filename:     safeFileName,
             image:        { type: 'jpeg', quality: 1 },
             html2canvas:  { 
                 scale: 2, 
@@ -609,8 +692,9 @@ DIČ: <span id="p_cus_dic">CZ87654321</span></div>
         });
     }
 
+    // Inicializace
     loadSupplierData();
+    renderTemplateList();
     renderItemsForm();
-</script>
-</body>
-</html>
+    
+    </script></body></html>
