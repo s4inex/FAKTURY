@@ -62,7 +62,6 @@
             margin-bottom: 20px;
         }
         
-        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: Zabraňuje přetečení gridu */
         .grid-2 > div {
             min-width: 0; 
         }
@@ -84,7 +83,6 @@
             color: #4b5563;
         }
 
-        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: min-width: 0 a max-width: 100% drží pole v displeji */
         input {
             padding: 8px 12px;
             border: 1px solid var(--border);
@@ -100,7 +98,6 @@
             margin: 0;
         }
 
-        /* OPRAVA DATUMOVÝCH POLÍ (hlavně pro iOS Safari) */
         input[type="date"] {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -120,7 +117,6 @@
 
         input:focus { border-color: var(--primary); }
         
-        /* OPRAVA MOBILNÍHO ZOBRAZENÍ: Zamezí natažení ohraničení (fieldsetu) mimo displej */
         fieldset {
             min-width: 0;
             box-sizing: border-box;
@@ -150,7 +146,6 @@
         
         .btn-small { width: auto; margin: 0; padding: 8px 12px; font-size: 0.9rem; }
 
-        /* OPRAVA MOBILNÍHO ZOBRAZENÍ PRO SPRÁVCE VZORŮ */
         .template-box {
             background: #eef2ff;
             border: 1px solid #c7d2fe;
@@ -171,18 +166,40 @@
             }
         }
 
+        /* VYLEPŠENÝ VZHLED POLOŽEK (jako karty) */
         .item-form-row {
             display: grid;
             grid-template-columns: 3fr 1fr 1.5fr 1fr auto;
-            gap: 10px;
+            gap: 15px;
             align-items: end;
-            margin-bottom: 10px;
-            background: #f9fafb;
-            padding: 10px;
-            border-radius: 6px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
+        .delete-item-btn {
+            margin-bottom: 1px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .del-text { display: none; }
         @media (max-width: 600px) {
-            .item-form-row { grid-template-columns: 1fr; }
+            .item-form-row { 
+                grid-template-columns: 1fr; 
+                gap: 12px;
+                padding: 20px 15px;
+            }
+            .delete-item-btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+            .del-text { display: inline; font-weight: bold; }
         }
 
         /* MODAL STYLY */
@@ -271,7 +288,6 @@
         .inv-total { text-align: right; }
         .inv-total-text { font-size: 24px; font-weight: bold; }
         
-        /* TISKOVÉ STYLY */
         @media print {
             @page { size: A4; margin: 0; }
             body { padding: 0; margin: 0; background: white; }
@@ -318,7 +334,6 @@
     <div class="container">
     <div class="panel form-panel">
         
-        <!-- OPRAVENÝ SPRÁVCE VZORŮ -->
         <div class="template-box">
             <label style="color: #4338ca; font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 10px;">📂 Načíst uložený vzor faktury</label>
             <div class="template-controls">
@@ -447,7 +462,6 @@
     document.getElementById('f_number').value = `${mm}/${yyyy}`;
     document.getElementById('f_vs').value = `${yyyy}${mm}001`;
 
-    /* ZMĚNA: Výchozí DPH u počáteční položky z 21 na 0 */
     let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
 
     function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
@@ -604,7 +618,9 @@
                         <label>DPH (%)</label>
                         <input type="number" min="0" value="${item.dph || 0}" onchange="updateItem(${index}, 'dph', this.value)">
                     </div>
-                    <button class="btn btn-danger" style="margin-bottom: 12px;" onclick="removeItem(${index})">X</button>
+                    <button class="btn btn-danger delete-item-btn" onclick="removeItem(${index})" title="Odebrat položku">
+                        ✖ <span class="del-text">Odebrat položku</span>
+                    </button>
                 </div>
             `;
         });
@@ -612,7 +628,6 @@
     }
 
     function addItem() {
-        /* ZMĚNA: Výchozí DPH u nové položky z 21 na 0 */
         items.push({ name: '', qty: 1, price: 0, dph: 0 }); 
         renderItemsForm();
     }
