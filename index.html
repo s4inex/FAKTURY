@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generátor Faktur</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Přidána knihovna pro generování QR kódů -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -459,15 +458,18 @@
                 </div>
 
                 <div class="inv-footer">
-                    <!-- Nový kontejner pro QR platbu -->
-                    <div class="qr-box">
-                        <div id="p_qr_code" style="width: 100px; height: 100px; margin: 0 auto; display: none;"></div>
-                        <div id="p_qr_text" style="font-size: 13px; margin-top: 5px; display: none; color: #555; font-weight: bold;">QR Platba</div>
-                    </div>
-
-                    <div class="stamp-box">
-                        <img id="p_stamp_img" class="stamp-img" src="" alt="Razítko a podpis">
-                        <div class="stamp-line">Razítko a podpis</div>
+                    
+                    <!-- Razítko a QR kód seskupeny pomocí flex na levé straně -->
+                    <div style="display: flex; align-items: flex-end; gap: 20px;">
+                        <div class="stamp-box">
+                            <img id="p_stamp_img" class="stamp-img" src="" alt="Razítko a podpis">
+                            <div class="stamp-line">Razítko a podpis</div>
+                        </div>
+                        
+                        <div class="qr-box">
+                            <div id="p_qr_code" style="width: 100px; height: 100px; margin: 0 auto; display: none;"></div>
+                            <div id="p_qr_text" style="font-size: 13px; margin-top: 5px; display: none; color: #555; font-weight: bold;">QR Platba</div>
+                        </div>
                     </div>
                     
                     <div class="inv-total">
@@ -480,6 +482,7 @@
                         <p style="margin: 0; color: #555; text-align: right;">Celkem k úhradě vč. DPH</p>
                         <div class="inv-total-text"><span id="p_total_price">0</span> Kč</div>
                     </div>
+
                 </div>
 
             </div>
@@ -535,7 +538,6 @@
         }
     }
 
-    // Přidáno pole f_iban
     const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_iban', 'f_sup_phone'];
 
     function loadSupplierData() {
@@ -708,7 +710,6 @@
         return d.toLocaleDateString('cs-CZ');
     }
 
-    // Pomocná funkce pro vygenerování řetězce SPAYD (Short Payment Descriptor)
     function generateSPAYD(iban, amount, vs, message) {
         if (!iban || iban.trim() === '') return null;
         iban = iban.replace(/\s+/g, '').toUpperCase();
@@ -737,7 +738,6 @@
             }
         });
 
-        // Viditelnost variabilního symbolu
         const showVs = document.getElementById('f_show_vs').checked;
         document.getElementById('p_row_vs').style.display = showVs ? 'flex' : 'none';
         const formGroupVs = document.getElementById('form_group_vs');
@@ -793,7 +793,6 @@
         document.getElementById('p_total_price').textContent = formatCurrency(total);
         saveSupplierData();
 
-        // --- Generování QR kódu ---
         const iban = document.getElementById('f_iban') ? document.getElementById('f_iban').value : '';
         const vs = showVs ? document.getElementById('f_vs').value : '';
         const invNum = document.getElementById('f_number').value;
@@ -801,7 +800,7 @@
 
         const qrContainer = document.getElementById('p_qr_code');
         const qrText = document.getElementById('p_qr_text');
-        qrContainer.innerHTML = ''; // Vyčištění starého kódu
+        qrContainer.innerHTML = ''; 
 
         if (spaydStr) {
             qrContainer.style.display = 'block';
