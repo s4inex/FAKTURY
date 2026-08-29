@@ -310,7 +310,7 @@
             <h2>⚙️ Nastavení</h2>
             <button class="close-btn" onclick="closeSettings()">&times;</button>
         </div>
-        <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0;">Tyto údaje se automaticky ukládají do prohlížeče a platí pro všechny nové faktury.</p>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0;">Veškeré údaje (včetně posledních položek) se automaticky ukládají do vašeho prohlížeče.</p>
         
         <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_sup_name" value="Moje Firma s.r.o." oninput="updatePreview()"></div>
         <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_sup_street" value="Podnikatelská 123" oninput="updatePreview()"></div>
@@ -330,9 +330,13 @@
         </div>
         
         <h3 style="font-size: 1rem; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">Předvolby faktury</h3>
-        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-bottom: 15px;">
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-bottom: 10px;">
             <input type="checkbox" id="f_show_vs" checked onchange="updatePreview()" style="width: auto;">
             <label for="f_show_vs" style="margin: 0; cursor: pointer;">Zobrazit variabilní symbol</label>
+        </div>
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="checkbox" id="f_hide_templates" onchange="updatePreview()" style="width: auto;">
+            <label for="f_hide_templates" style="margin: 0; cursor: pointer;">Skrýt sekci pro načítání vzorů</label>
         </div>
         <div class="form-group">
             <label>Typ zadávání DPH pro položky</label>
@@ -355,7 +359,7 @@
     <div class="container">
     <div class="panel form-panel">
         
-        <div class="template-box">
+        <div class="template-box" id="template_box_container">
             <label style="color: #4338ca; font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 10px;">📂 Načíst uložený vzor faktury</label>
             <div class="template-controls">
                 <select id="template-select" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #a5b4fc; background: white; outline: none; width: 100%; box-sizing: border-box;"></select>
@@ -382,12 +386,12 @@
 
         <fieldset style="border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 20px;">
             <legend style="font-weight: bold; font-size: 0.9rem;">Odběratel (Zákazník)</legend>
-            <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_cus_name" value="Zákazník a.s." oninput="updatePreview()"></div>
+            <div class="form-group"><label>Firma / Jméno</label><input type="text" id="f_cus_name" value="" oninput="updatePreview()"></div>
             <div class="grid-2" style="margin-bottom: 0;">
-                <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_cus_street" value="Nákupní 456" oninput="updatePreview()"></div>
-                <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_cus_city" value="Brno, 602 00" oninput="updatePreview()"></div>
-                <div class="form-group"><label>IČO</label><input type="text" id="f_cus_ico" value="87654321" oninput="updatePreview()"></div>
-                <div class="form-group"><label>DIČ</label><input type="text" id="f_cus_dic" value="CZ87654321" oninput="updatePreview()"></div>
+                <div class="form-group"><label>Ulice a č.p.</label><input type="text" id="f_cus_street" value="" oninput="updatePreview()"></div>
+                <div class="form-group"><label>Město a PSČ</label><input type="text" id="f_cus_city" value="" oninput="updatePreview()"></div>
+                <div class="form-group"><label>IČO</label><input type="text" id="f_cus_ico" value="" oninput="updatePreview()"></div>
+                <div class="form-group"><label>DIČ</label><input type="text" id="f_cus_dic" value="" oninput="updatePreview()"></div>
             </div>
         </fieldset>
 
@@ -459,7 +463,6 @@
 
                 <div class="inv-footer">
                     
-                    <!-- Razítko a QR kód seskupeny pomocí flex na levé straně -->
                     <div style="display: flex; align-items: flex-end; gap: 20px;">
                         <div class="stamp-box">
                             <img id="p_stamp_img" class="stamp-img" src="" alt="Razítko a podpis">
@@ -487,20 +490,13 @@
 
             </div>
         </div>
-    </div></div><script>
+    </div></div>
+
+    <script>
     
-    document.getElementById('f_date_issue').valueAsDate = new Date();
-    let dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 14);
-    document.getElementById('f_date_due').valueAsDate = dueDate;
-
-    const now = new Date();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const yyyy = now.getFullYear();
-    document.getElementById('f_number').value = `${mm}/${yyyy}`;
-    document.getElementById('f_vs').value = `${yyyy}${mm}001`;
-
-    let items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
+    let items = [];
+    const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_iban', 'f_sup_phone'];
+    const invoiceFields = ['f_number', 'f_vs', 'f_cus_name', 'f_cus_street', 'f_cus_city', 'f_cus_ico', 'f_cus_dic', 'f_date_issue', 'f_date_due'];
 
     function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
     function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
@@ -538,52 +534,44 @@
         }
     }
 
-    const supplierFields = ['f_sup_name', 'f_sup_street', 'f_sup_city', 'f_sup_ico', 'f_sup_dic', 'f_bank', 'f_iban', 'f_sup_phone'];
-
-    function loadSupplierData() {
-        supplierFields.forEach(id => {
-            const savedValue = localStorage.getItem(id);
-            if (savedValue !== null) {
-                document.getElementById(id).value = savedValue;
-            }
-        });
-        
-        const vsSaved = localStorage.getItem('f_show_vs');
-        if (vsSaved !== null) document.getElementById('f_show_vs').checked = vsSaved === 'true';
-
-        const dphTypeSaved = localStorage.getItem('f_dph_type');
-        if (dphTypeSaved !== null) document.getElementById('f_dph_type').value = dphTypeSaved;
-
-        const savedStamp = localStorage.getItem('f_sup_stamp_img');
-        if (savedStamp) {
-            updateStampPreview(savedStamp);
+    // --- LOGIKA PRO VZORY (ROBUSTNÍ VERZE) ---
+    
+    // Pomocná funkce: Vždy načte čerstvé vzory z paměti
+    function getTemplates() {
+        try {
+            const data = JSON.parse(localStorage.getItem('invoice_templates'));
+            return (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+        } catch (e) {
+            return {};
         }
     }
 
-    function saveSupplierData() {
-        supplierFields.forEach(id => {
-            localStorage.setItem(id, document.getElementById(id).value);
-        });
-        localStorage.setItem('f_show_vs', document.getElementById('f_show_vs').checked);
-        localStorage.setItem('f_dph_type', document.getElementById('f_dph_type').value);
-    }
-
-    let invoiceTemplates = JSON.parse(localStorage.getItem('invoice_templates')) || {};
-
     function renderTemplateList() {
+        const templates = getTemplates();
         const select = document.getElementById('template-select');
+        const currentVal = select.value;
+        
         select.innerHTML = '<option value="">-- Vyberte uložený vzor --</option>';
-        for (let name in invoiceTemplates) {
+        
+        Object.keys(templates).forEach(name => {
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
             select.appendChild(option);
+        });
+        
+        // Zkusíme vrátit zpět předchozí výběr, pokud stále existuje
+        if (currentVal && templates[currentVal]) {
+            select.value = currentVal;
         }
     }
 
     function saveAsTemplate() {
-        const name = prompt("Zadejte název pro tento vzor (např. 'Paušál - Novák s.r.o.'):");
-        if (!name) return;
+        let name = prompt("Zadejte název pro tento vzor (např. 'Paušál - Novák s.r.o.'):");
+        if (!name || name.trim() === '') return;
+        name = name.trim();
+
+        const templates = getTemplates(); // Načteme čerstvá data
 
         const templateData = {
             f_number: document.getElementById('f_number').value,
@@ -598,30 +586,44 @@
             items: JSON.parse(JSON.stringify(items))
         };
         
-        invoiceTemplates[name] = templateData;
-        localStorage.setItem('invoice_templates', JSON.stringify(invoiceTemplates));
-        renderTemplateList();
+        templates[name] = templateData;
+        localStorage.setItem('invoice_templates', JSON.stringify(templates));
         
+        renderTemplateList();
         document.getElementById('template-select').value = name;
         alert(`Vzor '${name}' byl úspěšně uložen.`);
     }
 
     function loadTemplate() {
-        const name = document.getElementById('template-select').value;
-        if (!name || !invoiceTemplates[name]) {
+        const select = document.getElementById('template-select');
+        const name = select.value;
+        
+        if (!name) {
             alert("Vyberte platný vzor ze seznamu.");
             return;
         }
+
+        const templates = getTemplates(); // Načteme čerstvá data
         
-        const t = invoiceTemplates[name];
+        if (!templates[name]) {
+            alert("Tento vzor již neexistuje nebo je poškozen.");
+            renderTemplateList();
+            return;
+        }
         
-        const fields = ['f_number', 'f_vs', 'f_cus_name', 'f_cus_street', 'f_cus_city', 'f_cus_ico', 'f_cus_dic', 'f_date_issue', 'f_date_due'];
-        fields.forEach(f => {
-            if(t[f] !== undefined) document.getElementById(f).value = t[f];
+        const t = templates[name];
+        
+        invoiceFields.forEach(f => {
+            const el = document.getElementById(f);
+            if(el && t[f] !== undefined) {
+                el.value = t[f];
+            }
         });
         
         if (t.items && Array.isArray(t.items)) {
             items = JSON.parse(JSON.stringify(t.items));
+        } else {
+            items = [{ name: '', qty: 1, price: 0, dph: 0 }];
         }
         
         renderItemsForm();
@@ -629,20 +631,92 @@
     }
 
     function deleteTemplate() {
-        const name = document.getElementById('template-select').value;
+        const select = document.getElementById('template-select');
+        const name = select.value;
+        
         if (!name) {
             alert("Nejprve vyberte vzor ke smazání.");
             return;
         }
+        
         if (confirm(`Opravdu chcete trvale smazat vzor '${name}'?`)) {
-            delete invoiceTemplates[name];
-            localStorage.setItem('invoice_templates', JSON.stringify(invoiceTemplates));
+            const templates = getTemplates();
+            if (templates[name]) {
+                delete templates[name];
+                localStorage.setItem('invoice_templates', JSON.stringify(templates));
+            }
             renderTemplateList();
+            alert(`Vzor '${name}' byl smazán.`);
+        }
+    }
+    // --- KONEC LOGIKY PRO VZORY ---
+
+    function loadAllData() {
+        supplierFields.forEach(id => {
+            const savedValue = localStorage.getItem(id);
+            if (savedValue !== null) document.getElementById(id).value = savedValue;
+        });
+        
+        const vsSaved = localStorage.getItem('f_show_vs');
+        if (vsSaved !== null) document.getElementById('f_show_vs').checked = vsSaved === 'true';
+
+        const hideTplSaved = localStorage.getItem('f_hide_templates');
+        if (hideTplSaved !== null) document.getElementById('f_hide_templates').checked = hideTplSaved === 'true';
+
+        const dphTypeSaved = localStorage.getItem('f_dph_type');
+        if (dphTypeSaved !== null) document.getElementById('f_dph_type').value = dphTypeSaved;
+
+        const savedStamp = localStorage.getItem('f_sup_stamp_img');
+        if (savedStamp) updateStampPreview(savedStamp);
+
+        const hasSavedInvoice = localStorage.getItem('f_number') !== null;
+        if (hasSavedInvoice) {
+            invoiceFields.forEach(id => {
+                const val = localStorage.getItem(id);
+                if (val !== null) document.getElementById(id).value = val;
+            });
+        } else {
+            document.getElementById('f_date_issue').valueAsDate = new Date();
+            let dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+            document.getElementById('f_date_due').valueAsDate = dueDate;
+
+            const now = new Date();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            document.getElementById('f_number').value = `${mm}/${yyyy}`;
+            document.getElementById('f_vs').value = `${yyyy}${mm}001`;
+            
+            document.getElementById('f_cus_name').value = "Zákazník a.s.";
+            document.getElementById('f_cus_street').value = "Nákupní 456";
+            document.getElementById('f_cus_city').value = "Brno, 602 00";
+            document.getElementById('f_cus_ico').value = "87654321";
+            document.getElementById('f_cus_dic').value = "CZ87654321";
+        }
+
+        const savedItems = localStorage.getItem('f_items');
+        if (savedItems) {
+            try {
+                items = JSON.parse(savedItems);
+            } catch (e) {
+                items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
+            }
+        } else {
+            items = [{ name: 'Tvorba webových stránek', qty: 1, price: 15000, dph: 0 }];
         }
     }
 
+    function saveAllData() {
+        supplierFields.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
+        invoiceFields.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
+        
+        localStorage.setItem('f_show_vs', document.getElementById('f_show_vs').checked);
+        localStorage.setItem('f_hide_templates', document.getElementById('f_hide_templates').checked);
+        localStorage.setItem('f_dph_type', document.getElementById('f_dph_type').value);
+        localStorage.setItem('f_items', JSON.stringify(items));
+    }
+
     function updateDphType() {
-        saveSupplierData();
         renderItemsForm();
     }
 
@@ -738,6 +812,9 @@
             }
         });
 
+        const hideTemplates = document.getElementById('f_hide_templates').checked;
+        document.getElementById('template_box_container').style.display = hideTemplates ? 'none' : 'block';
+
         const showVs = document.getElementById('f_show_vs').checked;
         document.getElementById('p_row_vs').style.display = showVs ? 'flex' : 'none';
         const formGroupVs = document.getElementById('form_group_vs');
@@ -791,8 +868,7 @@
         document.getElementById('p_total_bez_dph').textContent = formatCurrency(totalBezDph) + ' Kč';
         document.getElementById('p_total_dph').textContent = formatCurrency(totalDph) + ' Kč';
         document.getElementById('p_total_price').textContent = formatCurrency(total);
-        saveSupplierData();
-
+        
         const iban = document.getElementById('f_iban') ? document.getElementById('f_iban').value : '';
         const vs = showVs ? document.getElementById('f_vs').value : '';
         const invNum = document.getElementById('f_number').value;
@@ -817,6 +893,8 @@
             qrContainer.style.display = 'none';
             qrText.style.display = 'none';
         }
+
+        saveAllData();
     }
 
     function generatePDF() {
@@ -835,7 +913,6 @@
         window.scrollTo(0, 0); 
 
         const invNum = document.getElementById('f_number').value || 'nova';
-        
         const safeFileName = `Faktura_${invNum.replace(/\//g, '-')}.pdf`;
         
         const opt = {
@@ -866,7 +943,8 @@
         });
     }
 
-    loadSupplierData();
+    // Inicializace
+    loadAllData();
     renderTemplateList();
     renderItemsForm();
     
